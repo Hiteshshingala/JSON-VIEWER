@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Editor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  </head>
+  <body>
+     <div class="toggle-container">
+      <label class="toggle-switch">
+        <input type="checkbox" />
+        <span class="slider"></span>
+        <span class="mode-icon">
+          <i class="fas fa-sun sun-icon"></i>
+          <i class="fas fa-moon moon-icon"></i>
+        </span>
+      </label>
+    </div>
+    <div class="container">
+      <div class="editor-panel">
+        <input type="file" id="fileInputLeft" accept=".json" />
+        <div class="tabs">
+          <div class="tab active" data-target="rawLeft">Text</div>
+          <div class="tab" data-target="treeLeft">Tree</div>
+          <div class="tab" data-target="tableLeft">Table</div>
+        </div>
+        <div class="button-container">
+          <button class="button format-button" data-format="indented">
+            <i class="fas fa-indent"></i>
+          </button>
+          <button class="button format-button" data-format="smart">
+            <i class="fas fa-magic"></i>
+          </button>
+          <button class="button format-button" data-format="compact">
+            <i class="fas fa-compress"></i>
+          </button>
+          <button class="button tree-button hidden" id="expandAll" data-format="expand">
+            <i class="fas fa-expand"></i>
+          </button>
+          <button class="button tree-button hidden" id="collapseAll" data-format="collapse">
+            <i class="fas fa-compress"></i>
+          </button>
+        </div>
+        <div id="rawLeft" class="content raw-content" contenteditable="true" style="display: block"></div>
+        <div id="treeLeft" class="content" style="display: none"></div>
+        <div id="tableLeft" class="content table-content" style="display: none"></div>
+      </div>
+      <div class="compare-container">
+        <button id="compareButton" class="button">Compare</button>
+        <div>
+          <button id="prevDiff"><i class="fa-solid fa-chevron-up"></i></button>
+          <button id="nextDiff"><i class="fa-solid fa-chevron-down"></i></button>
+        </div>
+      </div>
+      <div class="editor-panel">
+        <input type="file" id="fileInputRight" accept=".json" />
+        <div class="tabs">
+          <div class="tab active" data-target="rawRight">Text</div>
+          <div class="tab" data-target="treeRight">Tree</div>
+          <div class="tab" data-target="tableRight">Table</div>
+        </div>
+        <div class="button-container">
+          <button class="button format-button" data-format="indented">
+            <i class="fas fa-indent"></i>
+          </button>
+          <button class="button format-button" data-format="smart">
+            <i class="fas fa-magic"></i>
+          </button>
+          <button class="button format-button" data-format="compact">
+            <i class="fas fa-compress"></i>
+          </button>
+          <button class="button tree-button hidden" id="expandAllRight" data-format="expand">
+            <i class="fas fa-expand"></i>
+          </button>
+          <button class="button tree-button hidden" id="collapseAllRight" data-format="collapse">
+            <i class="fas fa-compress"></i>
+          </button>
+        </div>
+        <div id="rawRight" class="content raw-content" contenteditable="true" style="display: block"></div>
+        <div id="treeRight" class="content" style="display: none"></div>
+        <div id="tableRight" class="content table-content" style="display: none"></div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+    <script src="toggle-mode.js"></script>
+  </body>
+</html>
