@@ -116,6 +116,9 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
 }
+.content details div {
+    line-height: 0.7;
+}
 .raw-content {
   width: 97%;
   height: 400px;

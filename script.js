@@ -247,54 +247,55 @@ document.addEventListener("DOMContentLoaded", () => {
           const hasDiff = hasChildDifferences(obj, path);
           let html = `${padding}<details data-path="${path}"><summary class="${
             hasDiff ? "highlight" : ""
-          }"><span class="key">array</span>: [${obj.length} items]</summary>\n`;
+          }" style="display: flex margin-left: 20px;"><span class="key"> : </span>[${obj.length} items]</summary>`;
           obj.forEach((item, index) => {
             const itemPath = path ? `${path}.${index}` : `${index}`;
             const isHighlighted = differences.has(itemPath);
             const isCurrent = itemPath === currentDiffPath;
-            html += `${padding}  <div><span class="key${
+            html += `${padding}  <div style="display: flex"><span class="key${
               isHighlighted ? " highlight" : ""
             }${
               isCurrent ? " current-highlight" : ""
-            }" data-path="${itemPath}">${index}</span>: `;
+            }" data-path="${itemPath}" style="display: flex">${index} : </span>`;
             if (typeof item === "object" && item !== null) {
-              html += `${tree(item, indent + 1, itemPath)}</div>\n`;
+              html += `${tree(item, indent + 1, itemPath)}</div>`;
             } else {
               html += `<span class="${isHighlighted ? "highlight" : ""}${
                 isCurrent ? " current-highlight" : ""
-              }" data-path="${itemPath}">${value(item)}</span></div>\n`;
+              }" data-path="${itemPath}">${value(item)}</span></div>`;
             }
           });
-          html += `${padding}</details>\n`;
+          html += `${padding}</details>`;
           return html;
         }
         if (obj && typeof obj === "object") {
           const hasDiff = hasChildDifferences(obj, path);
           let html = `${padding}<details data-path="${path}"><summary class="${
             hasDiff ? "highlight" : ""
-          }"><span class="key">object</span>: {${
+          }" style="display: flex margin-left: 20px;"><span class="key"> : </span>{${
             Object.keys(obj).length
-          } keys}</summary>\n`;
+          } keys}</summary>`;
           for (const key in obj) {
             const keyPath = path ? `${path}.${key}` : key;
             const isHighlighted = differences.has(keyPath);
             const isCurrent = keyPath === currentDiffPath;
-            html += `${padding}  <div><span class="key${
+            html += `${padding}  <div style="display: flex"><span class="key${
               isHighlighted ? " highlight" : ""
             }${
               isCurrent ? " current-highlight" : ""
-            }" data-path="${keyPath}">${key}</span>: `;
+            }" data-path="${keyPath}" style="display: flex">${key} : </span>`;
             if (typeof obj[key] === "object" && obj[key] !== null) {
-              html += `${tree(obj[key], indent + 1, keyPath)}</div>\n`;
+              html += `${tree(obj[key], indent + 1, keyPath)}</div>`;
             } else {
               html += `<span class="${isHighlighted ? "highlight" : ""}${
                 isCurrent ? " current-highlight" : ""
-              }" data-path="${keyPath}">${value(obj[key])}</span></div>\n`;
+              }" data-path="${keyPath}">${value(obj[key])}</span></div>`;
             }
           }
-          html += `${padding}</details>\n`;
+          html += `${padding}</details>`;
           return html;
         }
+       
         const isHighlighted = differences.has(path);
         const isCurrent = path === currentDiffPath;
         return `<span class="${isHighlighted ? "highlight" : ""}${
@@ -302,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }" data-path="${path}">${value(obj)}</span>`;
       };
       return tree(obj, 0, path);
-    }
+}
 
     generateTable(obj) {
       if (!Array.isArray(obj) || obj.length === 0) return "";
