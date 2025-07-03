@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JSON Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/monokai.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -11,11 +27,11 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link rel="stylesheet" href="styles.css" />
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-     <div class="toggle-container">
+   <div class="toggle-container">
       <label class="toggle-switch">
         <input type="checkbox" />
         <span class="slider"></span>
@@ -25,69 +41,249 @@
         </span>
       </label>
     </div>
-    <div class="container">
-      <div class="editor-panel">
-        <input type="file" id="fileInputLeft" accept=".json" />
-        <div class="tabs">
-          <div class="tab active" data-target="rawLeft">Text</div>
-          <div class="tab" data-target="treeLeft">Tree</div>
-          <div class="tab" data-target="tableLeft">Table</div>
+    <div class="container space-x-1">
+      <!-- Left Panel -->
+      <div class="flex flex-col w-1/2 border border-[#49483e]">
+        <div
+          class="flex justify-end items-center bg-[#7aa65a] text-white text-sm font-sans px-2 space-x-3 h-8 select-none"
+        >
+          <button
+            id="new-left"
+            class="flex items-center space-x-1 hover:underline"
+          >
+            <i class="fas fa-file-alt"></i>
+            <span>New</span>
+          </button>
+          <div class="relative group">
+            <button
+              id="open-left"
+              class="flex items-center space-x-1 hover:underline"
+            >
+              <i class="fas fa-folder"></i>
+              <span>File Upload</span>
+            </button>
+            <input
+              type="file"
+              id="file-left"
+              accept=".json,.xlsx"
+              class="hidden"
+            />
+          </div>
+          <div class="relative group">
+            <button
+              id="save-left"
+              class="flex items-center space-x-1 hover:underline"
+            >
+              <i class="fas fa-save"></i>
+              <span>Save</span>
+            </button>
+          </div>
         </div>
-        <div class="button-container">
-          <button class="button format-button" data-format="indented">
-            <i class="fas fa-indent"></i>
+        <div
+          class="flex items-center bg-[#7aa65a] text-xs font-sans px-2 space-x-1 h-7 select-none"
+        >
+          <button
+            id="text-left"
+            class="bg-[#272822] text-[#a6e22e] rounded px-1.5 py-[1px] font-semibold"
+          >
+            Text
           </button>
-          <button class="button format-button" data-format="smart">
-            <i class="fas fa-magic"></i>
+          <button
+            id="tree-left"
+            class="bg-[#a6e22e] text-[#272822] rounded px-1.5 py-[1px]"
+          >
+            Tree
           </button>
-          <button class="button format-button" data-format="compact">
-            <i class="fas fa-compress"></i>
+          <button
+            id="table-left"
+            class="bg-[#a6e22e] text-[#272822] rounded px-1.5 py-[1px]"
+          >
+            Table
           </button>
-          <button class="button tree-button hidden" id="expandAll" data-format="expand">
+          <button
+            id="indented-left"
+            class="format-button"
+            data-format="indented"
+          >
+            <i class="fas fa-align-left"></i>
+          </button>
+          <button id="smart-left" class="format-button" data-format="smart">
+            <i class="fas fa-align-center"></i>
+          </button>
+          <button id="compact-left" class="format-button" data-format="compact">
+            <i class="fas fa-align-right"></i>
+          </button>
+          <button
+            class="tree-button hidden"
+            id="expandAll-left"
+            data-format="expand"
+          >
             <i class="fas fa-expand"></i>
           </button>
-          <button class="button tree-button hidden" id="collapseAll" data-format="collapse">
+          <button
+            class="tree-button hidden"
+            id="collapseAll-left"
+            data-format="collapse"
+          >
             <i class="fas fa-compress"></i>
           </button>
         </div>
-        <div id="rawLeft" class="content raw-content" contenteditable="true" style="display: block"></div>
-        <div id="treeLeft" class="content" style="display: none"></div>
-        <div id="tableLeft" class="content table-content" style="display: none"></div>
-      </div>
-      <div class="compare-container">
-        <button id="compareButton" class="button">Compare</button>
-        <div>
-          <button id="prevDiff"><i class="fa-solid fa-chevron-up"></i></button>
-          <button id="nextDiff"><i class="fa-solid fa-chevron-down"></i></button>
+        <div
+          id="left-container"
+          class="flex-1 bg-[#272822] text-[#f8f8f2] font-mono text-xs relative"
+        >
+          <div
+            class="absolute top-0 left-0 w-6 bg-[#49483e] text-[#75715e] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right"
+          >
+            1
+          </div>
+          <textarea
+            id="left-editor"
+            aria-label="Code editor left pane"
+            spellcheck="false"
+            class="w-full h-full bg-transparent text-[#f8f8f2] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"
+          ></textarea>
         </div>
       </div>
-      <div class="editor-panel">
-        <input type="file" id="fileInputRight" accept=".json" />
-        <div class="tabs">
-          <div class="tab active" data-target="rawRight">Text</div>
-          <div class="tab" data-target="treeRight">Tree</div>
-          <div class="tab" data-target="tableRight">Table</div>
+      <!-- Middle Panel -->
+      <div
+        class="flex flex-col justify-center bg-[#272822] w-32 max-h-full text-center text-[#75715e] font-sans text-xs select-none"
+      >
+        <div class="flex flex-col items-center space-y-1 py-3">
+          <div>Copy</div>
+          <div class="flex justify-center space-x-1">
+            <button
+              id="copy-right-to-left"
+              class="bg-[#49483e] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto"
+            >
+              <i class="fas fa-chevron-left text-[#f8f8f2]"></i>
+            </button>
+            <button
+              id="copy-left-to-right"
+              class="bg-[#49483e] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto"
+            >
+              <i class="fas fa-chevron-right text-[#f8f8f2]"></i>
+            </button>
+          </div>
         </div>
-        <div class="button-container">
-          <button class="button format-button" data-format="indented">
-            <i class="fas fa-indent"></i>
+        <div
+          class="flex flex-col justify-center space-y-1 py-3 border-t border-[#49483e]"
+        >
+          <div>Differences</div>
+          <label
+            class="bg-[#49483e] hover:bg-[#555] rounded w-20 h-8 flex items-center justify-center mx-auto cursor-pointer"
+          >
+            <input id="compare" type="checkbox" class="mr-1" />
+            Compare
+          </label>
+        </div>
+      </div>
+      <!-- Right Panel -->
+      <div class="flex flex-col w-1/2 border border-[#49483e]">
+        <div
+          class="flex justify-end items-center bg-[#7aa65a] text-white text-sm font-sans px-2 space-x-3 h-8 select-none"
+        >
+          <button
+            id="new-right"
+            class="flex items-center space-x-1 hover:underline"
+          >
+            <i class="fas fa-file-alt"></i>
+            <span>New</span>
           </button>
-          <button class="button format-button" data-format="smart">
-            <i class="fas fa-magic"></i>
+          <div class="relative group">
+            <button
+              id="open-right"
+              class="flex items-center space-x-1 hover:underline"
+            >
+              <i class="fas fa-folder"></i>
+              <span>File Upload</span>
+            </button>
+            <input
+              type="file"
+              id="file-right"
+              accept=".json,.xlsx"
+              class="hidden"
+            />
+          </div>
+          <div class="relative group">
+            <button
+              id="save-right"
+              class="flex items-center space-x-1 hover:underline"
+            >
+              <i class="fas fa-save"></i>
+              <span>Save</span>
+            </button>
+          </div>
+        </div>
+        <div
+          class="flex items-center bg-[#7aa65a] text-xs font-sans px-2 space-x-1 h-7 select-none"
+        >
+          <button
+            id="text-right"
+            class="bg-[#272822] text-[#a6e22e] rounded px-1.5 py-[1px] font-semibold"
+          >
+            Text
           </button>
-          <button class="button format-button" data-format="compact">
-            <i class="fas fa-compress"></i>
+          <button
+            id="tree-right"
+            class="bg-[#a6e22e] text-[#272822] rounded px-1.5 py-[1px]"
+          >
+            Tree
           </button>
-          <button class="button tree-button hidden" id="expandAllRight" data-format="expand">
+          <button
+            id="table-right"
+            class="bg-[#a6e22e] text-[#272822] rounded px-1.5 py-[1px]"
+          >
+            Table
+          </button>
+          <button
+            id="indented-right"
+            class="format-button"
+            data-format="indented"
+          >
+            <i class="fas fa-align-left"></i>
+          </button>
+          <button id="smart-right" class="format-button" data-format="smart">
+            <i class="fas fa-align-center"></i>
+          </button>
+          <button
+            id="compact-right"
+            class="format-button"
+            data-format="compact"
+          >
+            <i class="fas fa-align-right"></i>
+          </button>
+          <button
+            class="tree-button hidden"
+            id="expandAll-right"
+            data-format="expand"
+          >
             <i class="fas fa-expand"></i>
           </button>
-          <button class="button tree-button hidden" id="collapseAllRight" data-format="collapse">
+          <button
+            class="tree-button hidden"
+            id="collapseAll-right"
+            data-format="collapse"
+          >
             <i class="fas fa-compress"></i>
           </button>
         </div>
-        <div id="rawRight" class="content raw-content" contenteditable="true" style="display: block"></div>
-        <div id="treeRight" class="content" style="display: none"></div>
-        <div id="tableRight" class="content table-content" style="display: none"></div>
+        <div
+          id="right-container"
+          class="flex-1 bg-[#272822] text-[#f8f8f2] font-mono text-xs relative overflow-auto"
+        >
+          <div
+            class="absolute top-0 left-0 w-6 bg-[#49483e] text-[#75715e] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right"
+          >
+            1
+          </div>
+          <textarea
+            id="right-editor"
+            aria-label="Code editor right pane"
+            spellcheck="false"
+            class="w-full h-full bg-transparent text-[#f8f8f2] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"
+          ></textarea>
+        </div>
       </div>
     </div>
     <script src="script.js"></script>
