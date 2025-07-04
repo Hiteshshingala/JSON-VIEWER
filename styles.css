@@ -1,314 +1,346 @@
+:root {
+  /* Dark theme variables (default) */
+  --background-color: #2b2b2b;
+  --text-color: #f8f8f2;
+  --border-color: #49483e;
+  --editor-bg: #272822;
+  --property-color: #a6e22e;
+  --string-color: #e6db74;
+  --number-color: #ae81ff;
+  --keyword-color: #66d9ef;
+  --button-bg: #a6e22e;
+  --button-text: #272822;
+  --header-bg: #7aa65a;
+  --header-text: #ffffff;
+  --highlight-diff: #ff0000;
+  --highlight-parent: #ff0000;
+  --toggle-bg: #b3b0b0;
+  --toggle-slider: #070707;
+  --toggle-active: #f5f382;
+  --codemirror-theme: monokai;
+}
 
-      .CodeMirror {
-        height: 100% !important;
-        width: 100% !important;
-      }
+[data-theme="light"] {
+  /* Light theme variables */
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --border-color: #d1d5db;
+  --editor-bg: #f8f8f8;
+  --property-color: #2f855a;
+  --string-color: #b5617f;
+  --number-color: #6b7280;
+  --keyword-color: #3182ce;
+  --button-bg: #a6e22e;
+  --button-text: #1f2937;
+  --header-bg: #7aa65a;
+  --header-text: #ffffff;
+  --highlight-diff: #ff6b6b;
+  --highlight-parent: #ff6b6b;
+  --toggle-bg: #d1d5db;
+  --toggle-slider: #a7acb3;
+  --toggle-active: #000000;
+  --codemirror-theme: default;
+}
 
-      .CodeMirror-scroll {
-        margin-right: -15px !important;
-        padding-bottom: 15px !important;
-        height: 850px !important;
-      }
+.CodeMirror {
+  height: 100% !important;
+  width: 100% !important;
+}
 
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-        background-color: #2b2b2b;
-        height: 100vh;
-      }
+.CodeMirror-scroll {
+  margin-right: -15px !important;
+  padding-bottom: 15px !important;
+  height: 850px !important;
+}
 
-      .toggle-container {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 1000;
-      }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: var(--background-color);
+  height: 100vh;
+  color: var(--text-color);
+}
 
-      /* Estilo do botão de alternância */
-      .toggle-switch {
-        display: inline-block;
-        position: relative;
-        width: 80px;
-        height: 34px;
-        overflow: hidden;
-      }
+.toggle-container {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
 
-      /* Estilo do input do botão de alternância */
-      .toggle-switch input {
-        display: none;
-      }
+.toggle-switch {
+  display: inline-block;
+  position: relative;
+  width: 50px;
+  height: 24px;
+  overflow: hidden;
+}
 
-      /* Estilo do controle deslizante do botão de alternância */
-      .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #b3b0b0;
-        border-radius: 34px;
-        transition: 0.4s;
-      }
+.toggle-switch input {
+  display: none;
+}
 
-      /* Estilo da bolinha deslizante */
-      .slider:before {
-        content: "";
-        position: absolute;
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: rgb(7, 7, 7);
-        border-radius: 50%;
-        transition: 0.4s;
-      }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg);
+  border-radius: 24px;
+  transition: 0.4s;
+}
 
-      /* Estilo do botão de alternância quando está ativo (ligado) */
-      .toggle-switch input:checked + .slider {
-        background-color: #f5f382;
-      }
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--toggle-slider);
+  border-radius: 50%;
+  transition: 0.4s;
+}
 
-      /* Estilo da bolinha deslizante quando o botão de alternância está ativo */
-      .toggle-switch input:checked + .slider:before {
-        transform: translateX(
-          46px
-        ); /* Aumentando a distância para acomodar o ícone da lua */
-      }
+.toggle-switch input:checked + .slider {
+  background-color: var(--toggle-active);
+}
 
-      /* Estilo do ícone de alternância (sol e lua) */
-      .mode-icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: absolute;
-        height: 100%;
-        width: 80px; /* Tamanho igual ao botão */
-        top: 0;
-        left: 0;
-        transition: transform 0.4s;
-      }
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(26px);
+}
 
-      /* Estilo do ícone do sol e da lua */
-      .sun-icon,
-      .moon-icon {
-        font-size: 24px; /* Tamanho do ícone */
-        transition: opacity 0.4s;
-        position: absolute;
-        top: 4px;
-        opacity: 0; /* Inicialmente oculto */
-      }
+.mode-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  height: 100%;
+  width: 50px;
+  top: 0;
+  left: 0;
+  transition: transform 0.4s;
+}
 
-      /* Estilo do ícone da lua quando o botão está ativo */
-      .moon-icon {
-        right: 4px;
-      }
+.sun-icon,
+.moon-icon {
+  font-size: 16px;
+  transition: opacity 0.4s;
+  position: absolute;
+  top: 4px;
+  opacity: 0;
+}
 
-      /* Classe para tornar elementos visíveis */
-      .visible {
-        opacity: 1;
-      }
+.moon-icon {
+  right: 4px;
+}
 
-      /* Estilo do ícone do sol quando o botão está inativo (desligado) */
-      .sun-icon {
-        left: -18px;
-      }
+.sun-icon {
+  left: 4px;
+}
 
-      .container {
-        max-width: 1600px;
-        margin: 0 auto;
-        display: flex;
-        align-items: stretch;
-      }
+.toggle-switch input:checked ~ .mode-icon .moon-icon,
+.toggle-switch input:not(:checked) ~ .mode-icon .sun-icon {
+  opacity: 1;
+}
 
-      .main-container {
-        display: flex;
-        width: 100%;
-        height: calc(100vh - 40px);
-      }
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: stretch;
+}
 
-      #left-container,
-      #right-container {
-        width: 100%;
-        position: relative;
-        background-color: #272822; /* Monokai background */
-        box-sizing: border-box;
-      }
+.main-container {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 40px);
+}
 
-      .json-tree {
-        color: #f8f8f2; /* Monokai foreground */
-        font-family: "Source Code Pro", monospace;
-        font-size: 12px;
-        padding: 10px;
-        width: 100%;
-        box-sizing: border-box;
-        overflow: auto;
-      }
+#left-container,
+#right-container {
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+}
 
-      .json-tree ul {
-        list-style: none;
-        padding-left: 20px;
-        margin: 0;
-      }
+.json-tree {
+  color: var(--text-color);
+  font-family: "Source Code Pro", monospace;
+  font-size: 12px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+}
 
-      .json-tree li {
-        position: relative;
-        list-style-type: none;
-        line-height: 1.5;
-      }
+.json-tree ul {
+  list-style: none;
+  padding-left: 20px;
+  margin: 0;
+}
 
-      .json-tree .toggle {
-        cursor: pointer;
-        user-select: none;
-        margin-right: 5px;
-        color: #f8f8f2;
-      }
+.json-tree li {
+  position: relative;
+  list-style-type: none;
+  line-height: 1.5;
+}
 
-      .json-tree .toggle::before {
-        content: "\25B6";
-        display: inline-block;
-        width: 10px;
-      }
+.json-tree .toggle {
+  cursor: pointer;
+  user-select: none;
+  margin-right: 5px;
+  color: var(--text-color);
+}
 
-      .json-tree .toggle.open::before {
-        content: "\25BC";
-      }
+.json-tree .toggle::before {
+  content: "\25B6";
+  display: inline-block;
+  width: 10px;
+}
 
-      .json-tree .cm-property {
-        color: #a6e22e; /* Monokai property color */
-      }
+.json-tree .toggle.open::before {
+  content: "\25BC";
+}
 
-      .json-tree .cm-string {
-        color: #e6db74; /* Monokai string color */
-      }
+.json-tree .cm-property {
+  color: var(--property-color);
+}
 
-      .json-tree .cm-number {
-        color: #ae81ff; /* Monokai number color */
-      }
+.json-tree .cm-string {
+  color: var(--string-color);
+}
 
-      .json-tree .cm-boolean,
-      .json-tree .cm-null {
-        color: #66d9ef; /* Monokai keyword color */
-      }
+.json-tree .cm-number {
+  color: var(--number-color);
+}
 
-      .json-tree .array::after {
-        content: "[Array]";
-        color: #e6db74; /* Monokai comment color */
-        font-size: 10px;
-        margin-left: 5px;
-      }
+.json-tree .cm-boolean,
+.json-tree .cm-null {
+  color: var(--keyword-color);
+}
 
-      .json-tree .object::after {
-        content: "{Object}";
-        color: #e6db74;
-        font-size: 10px;
-        margin-left: 5px;
-      }
+.json-tree .array::after {
+  content: "[Array]";
+  color: var(--string-color);
+  font-size: 10px;
+  margin-left: 5px;
+}
 
-      .json-tree .cm-property.highlight-diff,
-      .json-tree .cm-property.highlight-parent {
-        background-color: #ff0000;
-        /*color: #f92672 !important; Monokai error color for diffs */
-      }
+.json-tree .object::after {
+  content: "{Object}";
+  color: var(--string-color);
+  font-size: 10px;
+  margin-left: 5px;
+}
 
-      .json-tree .cm-string.highlight-diff,
-      .json-tree .cm-number.highlight-diff,
-      .json-tree .cm-boolean.highlight-diff,
-      .json-tree .cm-null.highlight-diff {
-        background-color: #ff0000 !important;
-        color: #f8f8f2 !important;
-      }
+.json-tree .cm-property.highlight-diff,
+.json-tree .cm-property.highlight-parent {
+  background-color: var(--highlight-diff);
+}
 
-      table {
-        height: 100%;
-        width: 100%;
-        box-sizing: border-box;
-        font-family: "Source Code Pro", monospace;
-        font-size: 12px;
-        border-collapse: collapse;
-        max-height: 848px;
-        color: #f8f8f2; /* Monokai foreground */
-      }
+.json-tree .cm-string.highlight-diff,
+.json-tree .cm-number.highlight-diff,
+.json-tree .cm-boolean.highlight-diff,
+.json-tree .cm-null.highlight-diff {
+  background-color: var(--highlight-diff) !important;
+  color: var(--text-color) !important;
+}
 
-      table th,
-      table td {
-        border: 1px solid #49483e; /* Monokai gutter background */
-        padding: 8px;
-        text-align: left;
-      }
+table {
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: "Source Code Pro", monospace;
+  font-size: 12px;
+  border-collapse: collapse;
+  max-height: 848px;
+  color: var(--text-color);
+}
 
-      table thead {
-        position: sticky;
-        top: 0;
-        background-color: #272822; /* Monokai background */
-        z-index: 10;
-      }
+table th,
+table td {
+  border: 1px solid var(--border-color);
+  padding: 8px;
+  text-align: left;
+}
 
-      table th {
-        color: #a6e22e; /* Monokai property color for headers */
-      }
+table thead {
+  position: sticky;
+  top: 0;
+  background-color: var(--editor-bg);
+  z-index: 10;
+}
 
-      table .cm-string {
-        color: #e6db74;
-      }
+table th {
+  color: var(--property-color);
+}
 
-      table .cm-number {
-        color: #ae81ff;
-      }
+table .cm-string {
+  color: var(--string-color);
+}
 
-      table .cm-boolean,
-      table .cm-null {
-        color: #66d9ef;
-      }
+table .cm-number {
+  color: var(--number-color);
+}
 
-      table .cm-property {
-        color: #a6e22e;
-      }
+table .cm-boolean,
+table .cm-null {
+  color: var(--keyword-color);
+}
 
-      table td.highlight-diff,
-      table th.highlight-diff {
-        background-color: #ff0000 !important;
-        color: #f8f8f2 !important;
-      }
+table .cm-property {
+  color: var(--property-color);
+}
 
-      table td.highlight-parent,
-      table th.highlight-parent {
-        color: #ff0000 !important;
-      }
+table td.highlight-diff,
+table th.highlight-diff {
+  background-color: var(--highlight-diff) !important;
+  color: var(--text-color) !important;
+}
 
-      .tree-button {
-        display: none;
-      }
+table td.highlight-parent,
+table th.highlight-parent {
+  color: var(--highlight-parent) !important;
+}
 
-      .tree-button.active {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        background-color: #a6e22e;
-        color: #272822;
-        border-radius: 4px;
-        cursor: pointer;
-      }
+.tree-button {
+  display: none;
+}
 
-      .tree-button.active:hover {
-        background-color: #8abe2f;
-      }
+.tree-button.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-      .format-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        background-color: transparent;
-        border-radius: 4px;
-        cursor: pointer;
-      }
+.tree-button.active:hover {
+  background-color: var(--button-bg);
+  opacity: 0.9;
+}
 
-      .format-button:hover {
-        color: #f8f8f2;
-      }
-   
+.format-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.format-button:hover {
+  color: var(--text-color);
+  opacity: 0.8;
+}

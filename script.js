@@ -1,43 +1,3 @@
-(function ($) {
-  $.fn.toggleSwitch = function () {
-    return this.each(function () {
-      const $toggleSwitch = $(this);
-      const $slider = $toggleSwitch.find(".slider");
-      const $modeIcon = $toggleSwitch.find(".mode-icon");
-      const $sunIcon = $toggleSwitch.find(".sun-icon");
-      const $moonIcon = $toggleSwitch.find(".moon-icon");
-
-      const updateUI = () => {
-        const isChecked = $toggleSwitch
-          .find('input[type="checkbox"]')
-          .prop("checked");
-        const backgroundColor = isChecked ? "#898873" : "#ffffff";
-        const bodyColor = isChecked ? "#ffffff" : "#050505";
-        const iconPosition = isChecked ? "26px" : "0";
-
-        $slider.css("background-color", backgroundColor);
-        $("body").css("background-color", bodyColor);
-        $modeIcon.css("transform", `translateX(${iconPosition})`);
-        $sunIcon.toggleClass("visible", isChecked);
-        $moonIcon.toggleClass("visible", !isChecked);
-      };
-
-      updateUI();
-
-      $toggleSwitch.find('input[type="checkbox"]').on("change", updateUI);
-      $toggleSwitch
-        .find('input[type="checkbox"]')
-        .on("keydown", function (event) {
-          if (event.key === "Enter") {
-            $toggleSwitch.find('input[type="checkbox"]').trigger("change");
-          }
-        });
-    });
-  };
-})(jQuery);
-
-$(".toggle-switch").toggleSwitch();
-
 var gk_isXlsx = false;
 var gk_xlsxFileLookup = {};
 var gk_fileData = {};
@@ -101,6 +61,38 @@ const rightEditor = CodeMirror.fromTextArea(
     autoCloseBrackets: true,
   }
 );
+
+// Theme toggle functionality
+$(document).ready(function () {
+  // Load saved theme from localStorage
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if (savedTheme === "light") {
+    $("body").attr("data-theme", "light");
+    $("#theme-toggle").prop("checked", true);
+    leftEditor.setOption("theme", "default");
+    rightEditor.setOption("theme", "default");
+  } else {
+    $("body").attr("data-theme", "dark");
+    $("#theme-toggle").prop("checked", false);
+    leftEditor.setOption("theme", "monokai");
+    rightEditor.setOption("theme", "monokai");
+  }
+
+  // Toggle theme on checkbox change
+  $("#theme-toggle").on("change", function () {
+    if ($(this).is(":checked")) {
+      $("body").attr("data-theme", "light");
+      localStorage.setItem("theme", "light");
+      leftEditor.setOption("theme", "default");
+      rightEditor.setOption("theme", "default");
+    } else {
+      $("body").attr("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+      leftEditor.setOption("theme", "monokai");
+      rightEditor.setOption("theme", "monokai");
+    }
+  });
+});
 
 // State to track current view mode and highlights
 let leftViewMode = "text";
@@ -230,7 +222,8 @@ function renderTable(container, json) {
       throw new Error("JSON must be an object or array for table view");
     }
     const table = document.createElement("table");
-    table.className = "w-full text-[#f8f8f2] border-collapse font-mono text-xs";
+    table.className =
+      "w-full text-[var(--text-color)] border-collapse font-mono text-xs";
     const tbody = document.createElement("tbody");
     if (Array.isArray(data)) {
       const headers = Object.keys(data[0] || {});
@@ -238,7 +231,7 @@ function renderTable(container, json) {
       const headerRow = document.createElement("tr");
       headers.forEach((key) => {
         const th = document.createElement("th");
-        th.className = "border border-[#49483e] p-2 cm-property";
+        th.className = "border border-[var(--border-color)] p-2 cm-property";
         th.textContent = key;
         headerRow.appendChild(th);
       });
@@ -248,7 +241,7 @@ function renderTable(container, json) {
         const tr = document.createElement("tr");
         headers.forEach((key) => {
           const td = document.createElement("td");
-          td.className = "border border-[#49483e] p-2";
+          td.className = "border border-[var(--border-color)] p-2";
           const value = item[key];
           td.className +=
             " " +
@@ -270,10 +263,10 @@ function renderTable(container, json) {
       Object.entries(data).forEach(([key, value]) => {
         const tr = document.createElement("tr");
         const tdKey = document.createElement("td");
-        tdKey.className = "border border-[#49483e] p-2 cm-property";
+        tdKey.className = "border border-[var(--border-color)] p-2 cm-property";
         tdKey.textContent = key;
         const tdValue = document.createElement("td");
-        tdValue.className = "border border-[#49483e] p-2";
+        tdValue.className = "border border-[var(--border-color)] p-2";
         tdValue.className +=
           " " +
           (typeof value === "string"
@@ -318,10 +311,11 @@ function toggleView(side, mode) {
   ];
 
   Object.values(buttons).forEach((btn) => {
-    btn.className = "bg-[#a6e22e] text-[#272822] rounded px-1.5 py-[1px]";
+    btn.className =
+      "bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]";
   });
   buttons[mode].className =
-    "bg-[#272822] text-[#a6e22e] rounded px-1.5 py-[1px] font-semibold";
+    "bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold";
 
   if (mode === "text") {
     formatButtons.forEach((btn) => {
@@ -816,12 +810,13 @@ function createActionMenu(path, side) {
 
   const button = document.createElement("button");
   button.innerHTML = "⋮";
-  button.className = "text-[#f8f8f2] bg-[#49483e] hover:bg-[#555] rounded px-1";
+  button.className =
+    "text-[var(--text-color)] bg-[var(--border-color)] hover:bg-[#555] rounded px-1";
   button.style.cursor = "pointer";
 
   const menu = document.createElement("div");
   menu.className =
-    "absolute bg-[#49483e] text-white rounded shadow p-1 hidden z-50";
+    "absolute bg-[var(--border-color)] text-[var(--text-color)] rounded shadow p-1 hidden z-50";
   menu.style.marginTop = "5px";
 
   const actions = ["Copy", "Paste"];
@@ -886,7 +881,6 @@ function handleAction(action, path, side) {
     } else if (action === "Paste" && clipboard != null) {
       try {
         editor.setValue(JSON.stringify(clipboard, null, 2));
-
         toggleView(side, viewMode);
       } catch (e) {
         alert("Error pasting at root: " + e.message);
@@ -977,6 +971,20 @@ function handleAction(action, path, side) {
     alert("Cannot paste: Clipboard is empty.");
     console.warn("Paste attempted with empty clipboard.");
   }
+}
+
+function copyToClipboardFallback(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+    document.execCommand("copy");
+    console.log("Fallback: Successfully copied to clipboard");
+  } catch (err) {
+    console.error("Fallback: Failed to copy to clipboard", err);
+  }
+  document.body.removeChild(textArea);
 }
 
 function generateUniqueKey(obj) {
