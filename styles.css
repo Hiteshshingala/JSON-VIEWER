@@ -18,6 +18,23 @@
   --toggle-slider: #070707;
   --toggle-active: #f5f382;
   --codemirror-theme: monokai;
+
+  /* Transform Modal specific variables for dark theme */
+  --transform-modal-bg: #2b2b2b;
+  --transform-modal-text: #f8f8f2;
+  --transform-modal-header-bg: #7aa65a;
+  --transform-modal-header-text: #ffffff;
+  --transform-modal-input-bg: #3a3a3a;
+  --transform-modal-input-text: #f8f8f2;
+  --transform-modal-input-border: #49483e;
+  --transform-modal-details-bg: #3a3a3a;
+  --transform-modal-details-border: #49483e;
+  --transform-modal-code-bg: #3a3a3a;
+  --transform-modal-code-text: #f8f8f2;
+  --transform-modal-json-tree-bg: #272822;
+  --transform-modal-json-tree-text: #f8f8f2;
+  --transform-modal-button-bg: #8cae6e;
+  --transform-modal-button-hover-bg: #7a9e5f;
 }
 
 [data-theme="light"] {
@@ -40,6 +57,23 @@
   --toggle-slider: #a7acb3;
   --toggle-active: #000000;
   --codemirror-theme: default;
+
+  /* Transform Modal specific variables for light theme */
+  --transform-modal-bg: #ffffff;
+  --transform-modal-text: #333333;
+  --transform-modal-header-bg: #8cae6e;
+  --transform-modal-header-text: #ffffff;
+  --transform-modal-input-bg: #f8f8f8;
+  --transform-modal-input-text: #333333;
+  --transform-modal-input-border: #d1d5db;
+  --transform-modal-details-bg: #f0f0f0;
+  --transform-modal-details-border: #d1d5db;
+  --transform-modal-code-bg: #eee;
+  --transform-modal-code-text: #333;
+  --transform-modal-json-tree-bg: #ffffff;
+  --transform-modal-json-tree-text: #333333;
+  --transform-modal-button-bg: #8cae6e;
+  --transform-modal-button-hover-bg: #7a9e5f;
 }
 
 .CodeMirror {
@@ -105,11 +139,11 @@ body {
   transition: 0.4s;
 }
 
-.toggle-switch input:checked + .slider {
+.toggle-switch input:checked+.slider {
   background-color: var(--toggle-active);
 }
 
-.toggle-switch input:checked + .slider:before {
+.toggle-switch input:checked+.slider:before {
   transform: translateX(26px);
 }
 
@@ -142,8 +176,8 @@ body {
   left: 4px;
 }
 
-.toggle-switch input:checked ~ .mode-icon .moon-icon,
-.toggle-switch input:not(:checked) ~ .mode-icon .sun-icon {
+.toggle-switch input:checked~.mode-icon .moon-icon,
+.toggle-switch input:not(:checked)~.mode-icon .sun-icon {
   opacity: 1;
 }
 
@@ -343,4 +377,265 @@ table th.highlight-parent {
 .format-button:hover {
   color: var(--text-color);
   opacity: 0.8;
+}
+
+/* Styles for the Transform Modal content */
+.transform-modal-content {
+  text-align: left;
+  padding: 10px;
+  max-height: 80vh;
+  /* Limit height to prevent overflow */
+  overflow-y: auto;
+  /* Enable scrolling for content */
+}
+
+.transform-modal-content h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.transform-modal-content p {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.transform-modal-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+
+.transform-modal-content pre {
+  background-color: var(--transform-modal-code-bg);
+  color: var(--transform-modal-code-text);
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin-bottom: 10px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.transform-modal-content ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.transform-modal-content li {
+  margin-bottom: 5px;
+}
+
+.transform-modal-content img {
+  max-width: 100%;
+  height: auto;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Scrollbar styling for code areas */
+textarea::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: #a3b18a;
+  border-radius: 4px;
+}
+
+/* Popup Modal Styling */
+#popup-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#popup-modal.hidden {
+  display: none;
+}
+
+#popup-modal .popup-modal-content-box {
+  background-color: var(--transform-modal-bg);
+  color: var(--transform-modal-text);
+}
+
+#popup-modal .bg-transform-modal-header {
+  background-color: var(--transform-modal-header-bg);
+  color: var(--transform-modal-header-text);
+}
+
+#popup-modal .text-gray-700 {
+  color: var(--transform-modal-text);
+}
+
+#popup-modal input[type="text"],
+#popup-modal select,
+#popup-modal textarea {
+  background-color: var(--transform-modal-input-bg);
+  color: var(--transform-modal-input-text);
+  border-color: var(--transform-modal-input-border);
+}
+
+#popup-modal .bg-gray-50 {
+  background-color: var(--transform-modal-details-bg);
+  border-color: var(--transform-modal-details-border);
+}
+
+#popup-modal .bg-gray-100 {
+  background-color: var(--transform-modal-details-bg);
+  border-color: var(--transform-modal-details-border);
+}
+
+#popup-modal .bg-white {
+  background-color: var(--transform-modal-json-tree-bg);
+  color: var(--transform-modal-json-tree-text);
+}
+
+#popup-modal #transform-button {
+  background-color: var(--transform-modal-button-bg);
+  color: var(--transform-modal-header-text);
+}
+
+#popup-modal #transform-button:hover {
+  background-color: var(--transform-modal-button-hover-bg);
+}
+
+/* Styles for the dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  min-width: 120px;
+  z-index: 100;
+  display: none;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 8px 12px;
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.dropdown-menu a:hover {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.dropdown-menu label {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: var(--text-color);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.dropdown-menu label input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+/* Multi-select styling */
+.select2-container--default .select2-selection--multiple {
+  background-color: var(--transform-modal-input-bg) !important;
+  border: 1px solid var(--transform-modal-input-border) !important;
+  border-radius: 0.25rem !important;
+  min-height: 32px !important;
+  padding: 2px !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: var(--transform-modal-details-bg) !important;
+  border: 1px solid var(--transform-modal-input-border) !important;
+  border-radius: 4px !important;
+  padding: 0 5px !important;
+  margin-top: 4px !important;
+  margin-right: 5px !important;
+  color: var(--transform-modal-text) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: var(--transform-modal-text) !important;
+  float: right !important;
+  margin-left: 5px !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+  color: var(--transform-modal-text) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  padding-left: 5px !important;
+  color: var(--transform-modal-input-text) !important;
+}
+
+.select2-container .select2-search--inline .select2-search__field {
+  margin-top: 0 !important;
+  color: var(--transform-modal-input-text) !important;
+}
+
+/* Custom styles for scrollable select dropdowns */
+.scrollable-select {
+  max-height: 50px !important;
+  /* Set a max height for the dropdown */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  /* Add custom scrollbar styles if desired */
+  scrollbar-width: thin;
+  /* For Firefox */
+  scrollbar-color: #a3b18a transparent;
+  /* For Firefox */
+}
+
+.scrollable-select::-webkit-scrollbar {
+  width: 8px;
+  /* For Chrome, Safari, Opera */
+}
+
+.scrollable-select::-webkit-scrollbar-thumb {
+  background-color: #a3b18a;
+  /* For Chrome, Safari, Opera */
+  border-radius: 4px;
+}
+
+/* Select2 dropdown results styling */
+.select2-container--default .select2-results__option {
+  background-color: var(--transform-modal-input-bg);
+  color: var(--transform-modal-input-text);
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+  background-color: var(--button-bg) !important;
+  color: var(--button-text) !important;
+}
+
+.select2-container--default .select2-results__option--selected {
+  background-color: var(--transform-modal-details-bg) !important;
+  color: var(--transform-modal-text) !important;
+}
+
+.select2-dropdown {
+  background-color: var(--transform-modal-input-bg) !important;
+  border: 1px solid var(--transform-modal-input-border) !important;
 }

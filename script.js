@@ -1,3 +1,4 @@
+
 var gk_isXlsx = false;
 var gk_xlsxFileLookup = {};
 var gk_fileData = {};
@@ -24,7 +25,9 @@ function loadFileData(filename) {
       if (headerRowIndex === -1 || headerRowIndex > 25) {
         headerRowIndex = 0;
       }
-      var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+      var csv = XLSX.utils.aoa_to_sheet(
+        filteredData.slice(headerRowIndex)
+      );
       csv = XLSX.utils.sheet_to_csv(csv);
       return csv;
     } catch (e) {
@@ -89,7 +92,7 @@ $(document).ready(function () {
       $("body").attr("data-theme", "dark");
       localStorage.setItem("theme", "dark");
       leftEditor.setOption("theme", "monokai");
-      rightEditor.setOption("theme", "monokai");
+      rightEditor.setOption("theme", "monokai"); /* Ensure right editor also updates */
     }
   });
 });
@@ -118,12 +121,14 @@ function formatJSON(editor, mode) {
 }
 
 // Custom JSON Tree View with CodeMirror styling
+// This function is for the main editor panels
 function renderJSONTree(container, json, side) {
   try {
     const data = JSON.parse(json);
     const tree = document.createElement("div");
     tree.className = "json-tree";
-    tree.appendChild(createTreeNode(data, "", true, "", side));
+    // Pass true for `includeActionMenu` for main editor panels
+    tree.appendChild(createTreeNode(data, "", true, "", side, true));
     container.innerHTML = "";
     container.appendChild(tree);
   } catch (e) {
@@ -132,15 +137,36 @@ function renderJSONTree(container, json, side) {
   }
 }
 
+// New function to render JSON Tree specifically for the modal
+function renderModalJSONTree(containerId, json) {
+  const container = document.getElementById(containerId);
+  try {
+    const data = JSON.parse(json);
+    const tree = document.createElement("div");
+    tree.className = "json-tree"; // Re-use existing tree styling
+    // Pass false for `includeActionMenu` for modal panels
+    // Pass true for `isOpen` to make arrays/objects open by default
+    tree.appendChild(createTreeNode(data, "", true, "", "modal", false, true));
+    container.innerHTML = "";
+    container.appendChild(tree);
+  } catch (e) {
+    container.innerHTML = `<pre style="color: red;">Invalid JSON: ${e.message}</pre>`;
+    console.error(`Error rendering JSON tree in modal (${containerId}):`, e);
+  }
+}
+
+
 function createTreeNode(
   data,
   key = "",
   isRoot = false,
   path = "",
-  side = "left"
+  side = "left", // 'left', 'right', or 'modal'
+  includeActionMenu = true, // New parameter to control action menu
+  isOpen = false // New parameter to control initial open state
 ) {
   const li = document.createElement("li");
-  li.id = `node-${path || "root"}`;
+  li.id = `node-${side}-${path || "root"}`; // Make ID unique per side/modal
   if (typeof data === "object" && data !== null) {
     const isArray = Array.isArray(data);
     const toggle = document.createElement("span");
@@ -152,21 +178,21 @@ function createTreeNode(
 
     const keySpan = document.createElement("span");
     keySpan.className = `cm-property ${isArray ? "array" : "object"}`;
-    keySpan.id = `key-${path || "root"}`;
+    keySpan.id = `key-${side}-${path || "root"}`; // Make ID unique per side/modal
     keySpan.textContent = key ? `${key}: ` : isArray ? "Array" : "Object";
     li.appendChild(toggle);
     li.appendChild(keySpan);
 
-    // Add action menu for arrays and objects
-    if (Array.isArray(data) || (typeof data === "object" && data !== null)) {
+    // Add action menu only if includeActionMenu is true
+    if (includeActionMenu && (Array.isArray(data) || (typeof data === "object" && data !== null))) {
       li.appendChild(createActionMenu(path || "root", side));
     }
 
     const ul = document.createElement("ul");
-    ul.style.display = "none";
-    if (isRoot) {
+    // Set initial display based on isOpen or isRoot
+    ul.style.display = (isRoot || isOpen) ? "block" : "none";
+    if (isRoot || isOpen) {
       toggle.classList.add("open");
-      ul.style.display = "block";
     }
 
     if (isArray) {
@@ -177,14 +203,16 @@ function createTreeNode(
           `[${index}]`,
           false,
           childPath,
-          side
+          side,
+          includeActionMenu, // Pass the flag down
+          isOpen // Pass the flag down
         );
         ul.appendChild(childLi);
       });
     } else {
       Object.entries(data).forEach(([k, v]) => {
         const childPath = path ? `${path}.${k}` : k;
-        const childLi = createTreeNode(v, k, false, childPath, side);
+        const childLi = createTreeNode(v, k, false, childPath, side, includeActionMenu, isOpen); // Pass the flag down
         ul.appendChild(childLi);
       });
     }
@@ -193,7 +221,7 @@ function createTreeNode(
   } else {
     const keySpan = document.createElement("span");
     keySpan.className = "cm-property";
-    keySpan.id = `key-${path || "root"}`;
+    keySpan.id = `key-${side}-${path || "root"}`; // Make ID unique per side/modal
     keySpan.textContent = key ? `${key}: ` : "";
 
     const valueSpan = document.createElement("span");
@@ -201,11 +229,11 @@ function createTreeNode(
       typeof data === "string"
         ? "cm-string"
         : typeof data === "number"
-        ? "cm-number"
-        : typeof data === "boolean"
-        ? "cm-boolean"
-        : "cm-null";
-    valueSpan.id = `value-${path || "root"}`;
+          ? "cm-number"
+          : typeof data === "boolean"
+            ? "cm-boolean"
+            : "cm-null";
+    valueSpan.id = `value-${side}-${path || "root"}`; // Make ID unique per side/modal
     valueSpan.textContent = JSON.stringify(data);
 
     li.appendChild(keySpan);
@@ -231,7 +259,8 @@ function renderTable(container, json) {
       const headerRow = document.createElement("tr");
       headers.forEach((key) => {
         const th = document.createElement("th");
-        th.className = "border border-[var(--border-color)] p-2 cm-property";
+        th.className =
+          "border border-[var(--border-color)] p-2 cm-property";
         th.textContent = key;
         headerRow.appendChild(th);
       });
@@ -248,12 +277,12 @@ function renderTable(container, json) {
             (typeof value === "string"
               ? "cm-string"
               : typeof value === "number"
-              ? "cm-number"
-              : typeof value === "boolean"
-              ? "cm-boolean"
-              : value === null
-              ? "cm-null"
-              : "");
+                ? "cm-number"
+                : typeof value === "boolean"
+                  ? "cm-boolean"
+                  : value === null
+                    ? "cm-null"
+                    : "");
           td.textContent = JSON.stringify(value || "");
           tr.appendChild(td);
         });
@@ -263,7 +292,8 @@ function renderTable(container, json) {
       Object.entries(data).forEach(([key, value]) => {
         const tr = document.createElement("tr");
         const tdKey = document.createElement("td");
-        tdKey.className = "border border-[var(--border-color)] p-2 cm-property";
+        tdKey.className =
+          "border border-[var(--border-color)] p-2 cm-property";
         tdKey.textContent = key;
         const tdValue = document.createElement("td");
         tdValue.className = "border border-[var(--border-color)] p-2";
@@ -272,12 +302,12 @@ function renderTable(container, json) {
           (typeof value === "string"
             ? "cm-string"
             : typeof value === "number"
-            ? "cm-number"
-            : typeof value === "boolean"
-            ? "cm-boolean"
-            : value === null
-            ? "cm-null"
-            : "");
+              ? "cm-number"
+              : typeof value === "boolean"
+                ? "cm-boolean"
+                : value === null
+                  ? "cm-null"
+                  : "");
         tdValue.textContent = JSON.stringify(value);
         tr.appendChild(tdKey);
         tr.appendChild(tdValue);
@@ -310,12 +340,22 @@ function toggleView(side, mode) {
     document.getElementById(`collapseAll-${side}`),
   ];
 
+  // Update button styles based on current theme
+  const isDarkTheme = $("body").attr("data-theme") === "dark";
+  const activeBg = isDarkTheme ? "#272822" : "#f8f8f8";
+  const activeText = isDarkTheme ? "#a6e22e" : "#2f855a";
+  const inactiveBg = isDarkTheme ? "#a6e22e" : "#a6e22e";
+  const inactiveText = isDarkTheme ? "#272822" : "#1f2937";
+
   Object.values(buttons).forEach((btn) => {
-    btn.className =
-      "bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]";
+    btn.style.backgroundColor = inactiveBg;
+    btn.style.color = inactiveText;
+    btn.classList.remove("font-semibold");
   });
-  buttons[mode].className =
-    "bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold";
+  buttons[mode].style.backgroundColor = activeBg;
+  buttons[mode].style.color = activeText;
+  buttons[mode].classList.add("font-semibold");
+
 
   if (mode === "text") {
     formatButtons.forEach((btn) => {
@@ -404,15 +444,26 @@ function handleFileUpload(input, editor) {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        let fileContent;
         if (file.name.endsWith(".xlsx")) {
           gk_isXlsx = true;
           gk_xlsxFileLookup[file.name] = true;
           gk_fileData[file.name] = event.target.result.split(",")[1];
-          editor.setValue(loadFileData(file.name));
+          fileContent = loadFileData(file.name);
         } else {
-          editor.setValue(event.target.result);
+          fileContent = event.target.result;
         }
+        editor.setValue(fileContent);
         toggleView(input.id.includes("left") ? "left" : "right", "text");
+
+        // Update Original and Preview in the Transform modal if it's the left editor
+        if (input.id === "file-left") {
+          // Now render as tree in the modal
+          renderModalJSONTree("original-json-tree-container", fileContent);
+          renderModalJSONTree("preview-json-tree-container", fileContent); // Initially same as original
+          populateWizardOptions(JSON.parse(fileContent));
+          updateQueryAndPreview();
+        }
       };
       if (file.name.endsWith(".xlsx")) {
         reader.readAsDataURL(file);
@@ -428,6 +479,10 @@ document.getElementById("new-left").addEventListener("click", () => {
   leftEditor.setValue("");
   clearHighlights("left");
   toggleView("left", "text");
+  // Clear Transform modal content
+  document.getElementById("original-json-tree-container").innerHTML = "";
+  document.getElementById("preview-json-tree-container").innerHTML = "";
+  resetWizardOptions();
 });
 document.getElementById("new-right").addEventListener("click", () => {
   rightEditor.setValue("");
@@ -478,16 +533,20 @@ document.getElementById("save-right").addEventListener("click", () => {
 });
 
 // Copy button handlers
-document.getElementById("copy-left-to-right").addEventListener("click", () => {
-  rightEditor.setValue(leftEditor.getValue());
-  clearHighlights("right");
-  toggleView("right", rightViewMode);
-});
-document.getElementById("copy-right-to-left").addEventListener("click", () => {
-  leftEditor.setValue(rightEditor.getValue());
-  clearHighlights("left");
-  toggleView("left", leftViewMode);
-});
+document
+  .getElementById("copy-left-to-right")
+  .addEventListener("click", () => {
+    rightEditor.setValue(leftEditor.getValue());
+    clearHighlights("right");
+    toggleView("right", rightViewMode);
+  });
+document
+  .getElementById("copy-right-to-left")
+  .addEventListener("click", () => {
+    leftEditor.setValue(rightEditor.getValue());
+    clearHighlights("left");
+    toggleView("left", leftViewMode);
+  });
 
 // Format button handlers
 document.getElementById("indented-left").addEventListener("click", () => {
@@ -499,9 +558,11 @@ document.getElementById("smart-left").addEventListener("click", () => {
 document.getElementById("compact-left").addEventListener("click", () => {
   formatJSON(leftEditor, "compact");
 });
-document.getElementById("indented-right").addEventListener("click", () => {
-  formatJSON(rightEditor, "indented");
-});
+document
+  .getElementById("indented-right")
+  .addEventListener("click", () => {
+    formatJSON(rightEditor, "indented");
+  });
 document.getElementById("smart-right").addEventListener("click", () => {
   formatJSON(rightEditor, "smart");
 });
@@ -540,18 +601,26 @@ document.getElementById("table-right").addEventListener("click", () => {
 });
 
 // Expand/Collapse button handlers
-document.getElementById("expandAll-left").addEventListener("click", () => {
-  toggleTreeNodes("left", "expand");
-});
-document.getElementById("collapseAll-left").addEventListener("click", () => {
-  toggleTreeNodes("left", "collapse");
-});
-document.getElementById("expandAll-right").addEventListener("click", () => {
-  toggleTreeNodes("right", "expand");
-});
-document.getElementById("collapseAll-right").addEventListener("click", () => {
-  toggleTreeNodes("right", "collapse");
-});
+document
+  .getElementById("expandAll-left")
+  .addEventListener("click", () => {
+    toggleTreeNodes("left", "expand");
+  });
+document
+  .getElementById("collapseAll-left")
+  .addEventListener("click", () => {
+    toggleTreeNodes("left", "collapse");
+  });
+document
+  .getElementById("expandAll-right")
+  .addEventListener("click", () => {
+    toggleTreeNodes("right", "expand");
+  });
+document
+  .getElementById("collapseAll-right")
+  .addEventListener("click", () => {
+    toggleTreeNodes("right", "collapse");
+  });
 
 // Clear highlights
 function clearHighlights(side) {
@@ -599,9 +668,10 @@ function applyHighlights(side) {
     });
   } else if (viewMode === "tree") {
     highlights.forEach((h) => {
-      const keyId = `key-${h.path.replace(/\./g, "\\.")}`;
-      const valueId = `value-${h.path.replace(/\./g, "\\.")}`;
-      const nodeId = `node-${h.path.replace(/\./g, "\\.")}`;
+      // Ensure IDs are unique for each side
+      const keyId = `key-${side}-${h.path.replace(/\./g, "\\.")}`;
+      const valueId = `value-${side}-${h.path.replace(/\./g, "\\.")}`;
+      const nodeId = `node-${side}-${h.path.replace(/\./g, "\\.")}`;
 
       const keyElement = container.querySelector(`#${keyId}`);
       const valueElement = container.querySelector(`#${valueId}`);
@@ -632,7 +702,9 @@ function applyHighlights(side) {
     highlights.forEach((h) => {
       const pathParts = h.path.split(".");
       const rowIndex =
-        pathParts.length > 1 ? parseInt(pathParts[pathParts.length - 2]) : -1;
+        pathParts.length > 1
+          ? parseInt(pathParts[pathParts.length - 2])
+          : -1;
       const key = pathParts[pathParts.length - 1];
       const table = container.querySelector("table");
       if (table) {
@@ -647,7 +719,9 @@ function applyHighlights(side) {
               ).map((th) => th.textContent);
               const colIndex = headers.indexOf(key);
               if (colIndex >= 0) {
-                const cell = row.querySelector(`td:nth-child(${colIndex + 1})`);
+                const cell = row.querySelector(
+                  `td:nth-child(${colIndex + 1})`
+                );
                 if (cell) {
                   cell.classList.add(
                     h.isParent ? "highlight-parent" : "highlight-diff"
@@ -712,7 +786,12 @@ function compareJSON(obj1, obj2, path = "") {
   const leftLines = leftEditor.getValue().split("\n");
   const rightLines = rightEditor.getValue().split("\n");
 
-  function addDiff(side, diffPath, isParent = false, isArrayIndex = false) {
+  function addDiff(
+    side,
+    diffPath,
+    isParent = false,
+    isArrayIndex = false
+  ) {
     const editor = side === "left" ? leftEditor : rightEditor;
     const lines = side === "left" ? leftLines : rightLines;
     let line = null;
@@ -768,7 +847,9 @@ function compareJSON(obj1, obj2, path = "") {
         } else if (!obj1.hasOwnProperty(key)) {
           addDiff("right", newPath, false, isArrayIndex);
           hasDiffs = true;
-        } else if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
+        } else if (
+          JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])
+        ) {
           addDiff("left", newPath, false, isArrayIndex);
           addDiff("right", newPath, false, isArrayIndex);
           hasDiffs = true;
@@ -993,18 +1074,299 @@ function generateUniqueKey(obj) {
   return "newKey" + i;
 }
 
-// Override renderJSONTree and createTreeNode
-const originalRenderJSONTree = renderJSONTree;
-renderJSONTree = function (container, json, side) {
-  try {
-    const data = JSON.parse(json);
-    const tree = document.createElement("div");
-    tree.className = "json-tree";
-    tree.appendChild(createTreeNode(data, "", true, "", side));
-    container.innerHTML = "";
-    container.appendChild(tree);
-  } catch (e) {
-    alert("Invalid JSON for tree view: " + e.message);
-    toggleView(container.id.includes("left") ? "left" : "right", "text");
+// Popup Logic
+document.getElementById("popup-button").addEventListener("click", function () {
+  document.getElementById("popup-modal").classList.remove("hidden");
+  // When the popup opens, update the Original and Preview sections with tree view
+  const currentLeftEditorContent = leftEditor.getValue();
+  renderModalJSONTree("original-json-tree-container", currentLeftEditorContent);
+  populateWizardOptions(JSON.parse(currentLeftEditorContent));
+  updateQueryAndPreview(); // Initial update
+});
+
+document.getElementById("close-popup").addEventListener("click", function () {
+  document.getElementById("popup-modal").classList.add("hidden");
+});
+
+// Settings Dropdown Logic
+document.getElementById("settings-button").addEventListener("click", function (event) {
+  event.stopPropagation(); // Prevent the document click listener from immediately closing it
+  document.getElementById("settings-dropdown").classList.toggle("show");
+});
+
+// Close the dropdown if the user clicks outside of it
+window.addEventListener("click", function (event) {
+  const dropdown = document.getElementById("settings-dropdown");
+  const settingsButton = document.getElementById("settings-button");
+  if (!settingsButton.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.classList.remove("show");
   }
-};
+});
+
+// --- Transform Modal Language and Query Logic ---
+const languageDescription = document.getElementById('language-description');
+const queryTextarea = document.getElementById('query');
+const settingsDropdown = document.getElementById('settings-dropdown');
+const filterKeySelect = document.getElementById('filter-key');
+const filterOperatorSelect = document.getElementById('filter-operator');
+const filterValueInput = document.getElementById('filter-value');
+const sortKeySelect = document.getElementById('sort-key');
+const sortOrderSelect = document.getElementById('sort-order');
+const pickKeysSelect = document.getElementById('pick-keys');
+const transformButton = document.getElementById('transform-button');
+
+let currentOriginalData = null;
+
+function updateTransformModalContent(language) {
+  let descriptionHtml = '';
+  let queryTemplate = '';
+
+  switch (language) {
+    case 'javascript':
+      descriptionHtml = `
+            Enter a <a href="#" class="text-blue-600 underline hover:text-blue-700">JavaScript</a> function to filter, sort, or transform the data. You can use
+            Lodash functions like
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.map</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.filter</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.orderBy</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.sortBy</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.groupBy</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.pick</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.uniq</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.get</code>, etcetera.
+          `;
+      queryTemplate = `function query (data) {
+  return _.chain(data)
+    .value()
+}`;
+      break;
+    default:
+      descriptionHtml = `
+            Enter a
+            <a href="#" class="text-blue-600 underline hover:text-blue-700">JSON Query</a>
+            function to filter, sort, or transform the data. You can use
+            functions like
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">get</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">filter</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">sort</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">pick</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">groupBy</code>,
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">uniq</code>, etcetera. Example
+            query:
+            <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">filter(.age &gt;= 18)</code>
+          `;
+      queryTemplate = '';
+      break;
+  }
+
+  languageDescription.innerHTML = descriptionHtml;
+  queryTextarea.value = queryTemplate;
+}
+
+// Function to extract all unique keys from a JSON object/array of objects, including nested keys
+function getAllKeys(data, prefix = '') {
+  const keys = new Set();
+
+  function recurse(currentData, currentPath) {
+    if (typeof currentData === 'object' && currentData !== null) {
+      if (Array.isArray(currentData)) {
+        // For arrays, iterate through items and get keys if items are objects
+        currentData.forEach((item, index) => {
+          if (typeof item === 'object' && item !== null) {
+            // We don't add array indices as filterable/sortable keys directly,
+            // but we do recurse into their objects.
+            recurse(item, currentPath); // No index in path for array items' keys
+          }
+        });
+      } else {
+        // For objects, add keys and recurse
+        Object.keys(currentData).forEach(key => {
+          const newPath = currentPath ? `${currentPath}.${key}` : key;
+          // Only add keys that are not objects or arrays themselves
+          if (typeof currentData[key] !== 'object' || currentData[key] === null) {
+            keys.add(newPath); // Add the full path of the key
+          }
+          recurse(currentData[key], newPath);
+        });
+      }
+    }
+  }
+
+  recurse(data, prefix);
+  return Array.from(keys).sort();
+}
+
+// Populate filter, sort, and pick dropdowns
+function populateWizardOptions(data) {
+  currentOriginalData = data; // Store original data for transformations
+  const keys = getAllKeys(data);
+
+  // Clear existing options
+  filterKeySelect.innerHTML = '<option value="">Please select</option>';
+  sortKeySelect.innerHTML = '<option value="">Please select</option>';
+  pickKeysSelect.innerHTML = ''; // Select2 handles its own placeholder
+
+  keys.forEach(key => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key;
+    filterKeySelect.appendChild(option.cloneNode(true));
+    sortKeySelect.appendChild(option.cloneNode(true));
+    pickKeysSelect.appendChild(option.cloneNode(true));
+  });
+
+  // Initialize Select2 for pick-keys
+  $(pickKeysSelect).select2({
+    placeholder: "Select keys to pick",
+    allowClear: true
+  });
+}
+
+// Reset wizard options
+function resetWizardOptions() {
+  filterKeySelect.innerHTML = '<option value="">Please select</option>';
+  filterOperatorSelect.value = '==';
+  filterValueInput.value = '';
+  sortKeySelect.innerHTML = '<option value="">Please select</option>';
+  sortOrderSelect.value = 'asc'; // Changed to 'asc' for consistency
+  $(pickKeysSelect).empty().trigger('change'); // Clear Select2
+  currentOriginalData = null;
+  updateQueryAndPreview(); // Clear query and preview
+}
+
+// Generate query based on wizard selections
+function generateQuery() {
+  let query = `function query (data) {
+  let result = _.chain(data)`;
+
+  const filterKey = filterKeySelect.value;
+  const filterOperator = filterOperatorSelect.value;
+  const filterValue = filterValueInput.value;
+
+  if (filterKey && filterValue) {
+    let parsedFilterValue = filterValue;
+    // Attempt to parse number or boolean
+    if (!isNaN(filterValue) && !isNaN(parseFloat(filterValue))) {
+      parsedFilterValue = parseFloat(filterValue);
+    } else if (filterValue.toLowerCase() === 'true') {
+      parsedFilterValue = true;
+    } else if (filterValue.toLowerCase() === 'false') {
+      parsedFilterValue = false;
+    } else {
+      parsedFilterValue = `'${filterValue}'`; // Treat as string
+    }
+
+    // Use _.get for nested properties
+    query += `
+    .filter(item => _.get(item, '${filterKey}') ${filterOperator} ${parsedFilterValue})`;
+  }
+
+  const sortKey = sortKeySelect.value;
+  const sortOrder = sortOrderSelect.value; // This will be 'asc' or 'desc'
+
+  if (sortKey) {
+    // Use _.orderBy with a custom iteratee for nested properties
+    // The order array should contain 'asc' or 'desc' strings
+    query += `
+    .orderBy([item => _.get(item, '${sortKey}')], ['${sortOrder}'])`;
+  }
+
+  const pickKeys = $(pickKeysSelect).val(); // Get selected values from Select2
+  if (pickKeys && pickKeys.length > 0) {
+    const formattedPickKeys = pickKeys.map(key => `'${key}'`).join(', ');
+    query += `
+    .map(item => _.pick(item, [${formattedPickKeys}]))`;
+  }
+
+  query += `
+    .value()
+  return result;
+}`;
+  return query;
+}
+
+// Update query textarea and preview
+function updateQueryAndPreview() {
+  const generatedQuery = generateQuery();
+  queryTextarea.value = generatedQuery;
+
+  if (currentOriginalData) {
+    try {
+      // Create a function from the query string
+      // This is generally unsafe if query comes from untrusted sources.
+      // For this demo, assuming it's generated internally or from trusted input.
+      const queryFunction = new Function('data', '_', generatedQuery.replace('function query (data) {', '').replace('}', ''));
+      const transformedData = queryFunction(currentOriginalData, _); // Pass Lodash as _
+
+      renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2));
+    } catch (e) {
+      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing query: ${e.message}</pre>`;
+      console.error("Error executing query:", e);
+    }
+  } else {
+    document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: gray;">No data loaded for preview.</pre>`;
+  }
+}
+
+// Event listeners for wizard controls
+filterKeySelect.addEventListener('change', updateQueryAndPreview);
+filterOperatorSelect.addEventListener('change', updateQueryAndPreview);
+filterValueInput.addEventListener('input', updateQueryAndPreview);
+sortKeySelect.addEventListener('change', updateQueryAndPreview);
+sortOrderSelect.addEventListener('change', updateQueryAndPreview);
+$(pickKeysSelect).on('change', updateQueryAndPreview); // Select2 change event
+
+// Event listener for manual query textarea changes
+queryTextarea.addEventListener('input', function () {
+  // If user manually edits, we might want to disable wizard or just let them
+  // For now, we'll just try to run their custom query for preview
+  if (currentOriginalData) {
+    try {
+      const customQuery = queryTextarea.value;
+      const queryFunction = new Function('data', '_', customQuery.replace('function query (data) {', '').replace('}', ''));
+      const transformedData = queryFunction(currentOriginalData, _);
+      renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2));
+    } catch (e) {
+      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing custom query: ${e.message}</pre>`;
+      console.error("Error executing custom query:", e);
+    }
+  }
+});
+
+// Transform button action
+transformButton.addEventListener('click', function () {
+  if (currentOriginalData) {
+    try {
+      const finalQuery = queryTextarea.value;
+      const queryFunction = new Function('data', '_', finalQuery.replace('function query (data) {', '').replace('}', ''));
+      const transformedData = queryFunction(currentOriginalData, _);
+
+      // Set the transformed data to the RIGHT editor
+      rightEditor.setValue(JSON.stringify(transformedData, null, 2));
+      toggleView("right", "text"); // Switch right panel to text view to show transformed JSON
+
+      document.getElementById("popup-modal").classList.add("hidden"); // Close modal
+    } catch (e) {
+      alert("Error applying transformation: " + e.message);
+      console.error("Transformation application error:", e);
+    }
+  } else {
+    alert("No data loaded to transform.");
+  }
+});
+
+
+// Initialize the transform modal content based on the default checked checkbox
+document.addEventListener('DOMContentLoaded', () => {
+  const initialCheckedCheckbox = document.querySelector('#settings-dropdown input[type="checkbox"]:checked');
+  if (initialCheckedCheckbox) {
+    updateTransformModalContent(initialCheckedCheckbox.dataset.language);
+  } else {
+    updateTransformModalContent('javascript'); // Default to JavaScript
+  }
+  // Initialize Select2 on page load for the pick-keys dropdown
+  $(pickKeysSelect).select2({
+    placeholder: "Select keys to pick",
+    allowClear: true
+  });
+});

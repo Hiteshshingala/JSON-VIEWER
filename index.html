@@ -1,291 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JSON Editor</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/monokai.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/default.min.css"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="toggle-container">
-      <label class="toggle-switch">
-        <input type="checkbox" id="theme-toggle" />
-        <span class="slider"></span>
-        <span class="mode-icon">
-          <i class="fas fa-sun sun-icon"></i>
-          <i class="fas fa-moon moon-icon"></i>
-        </span>
-      </label>
-    </div>
-    <div class="container space-x-1">
-      <!-- Left Panel -->
-      <div class="flex flex-col w-1/2 border border-[var(--border-color)]">
-        <div
-          class="flex justify-end items-center bg-[var(--header-bg)] text-[var(--header-text)] text-sm font-sans px-2 space-x-3 h-8 select-none"
-        >
-          <button
-            id="new-left"
-            class="flex items-center space-x-1 hover:underline"
-          >
-            <i class="fas fa-file-alt"></i>
-            <span>New</span>
-          </button>
-          <div class="relative group">
-            <button
-              id="open-left"
-              class="flex items-center space-x-1 hover:underline"
-            >
-              <i class="fas fa-folder"></i>
-              <span>File Upload</span>
-            </button>
-            <input
-              type="file"
-              id="file-left"
-              accept=".json,.xlsx"
-              class="hidden"
-            />
-          </div>
-          <div class="relative group">
-            <button
-              id="save-left"
-              class="flex items-center space-x-1 hover:underline"
-            >
-              <i class="fas fa-save"></i>
-              <span>Save</span>
-            </button>
-          </div>
-        </div>
-        <div
-          class="flex items-center bg-[var(--header-bg)] text-xs font-sans px-2 space-x-1 h-7 select-none"
-        >
-          <button
-            id="text-left"
-            class="bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold"
-          >
-            Text
-          </button>
-          <button
-            id="tree-left"
-            class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]"
-          >
-            Tree
-          </button>
-          <button
-            id="table-left"
-            class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]"
-          >
-            Table
-          </button>
-          <button
-            id="indented-left"
-            class="format-button"
-            data-format="indented"
-          >
-            <i class="fas fa-align-left"></i>
-          </button>
-          <button id="smart-left" class="format-button" data-format="smart">
-            <i class="fas fa-align-center"></i>
-          </button>
-          <button id="compact-left" class="format-button" data-format="compact">
-            <i class="fas fa-align-right"></i>
-          </button>
-          <button
-            class="tree-button hidden"
-            id="expandAll-left"
-            data-format="expand"
-          >
-            <i class="fas fa-expand"></i>
-          </button>
-          <button
-            class="tree-button hidden"
-            id="collapseAll-left"
-            data-format="collapse"
-          >
-            <i class="fas fa-compress"></i>
-          </button>
-        </div>
-        <div
-          id="left-container"
-          class="flex-1 text-[var(--text-color)] font-mono text-xs relative"
-        >
-          <div
-            class="absolute top-0 left-0 w-6 bg-[var(--border-color)] text-[#75715e] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right"
-          >
-            1
-          </div>
-          <textarea
-            id="left-editor"
-            aria-label="Code editor left pane"
-            spellcheck="false"
-            class="w-full h-full bg-transparent text-[var(--text-color)] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"
-          ></textarea>
-        </div>
-      </div>
-      <!-- Middle Panel -->
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSON Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/monokai.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="toggle-container">
+    <label class="toggle-switch">
+      <input type="checkbox" id="theme-toggle" />
+      <span class="slider"></span>
+      <span class="mode-icon">
+        <i class="fas fa-sun sun-icon"></i>
+        <i class="fas fa-moon moon-icon"></i>
+      </span>
+    </label>
+  </div>
+  <div class="container space-x-1">
+    <!-- Left Panel -->
+    <div class="flex flex-col w-1/2 border border-[var(--border-color)]">
       <div
-        class="flex flex-col justify-center w-32 max-h-full text-center text-[#75715e] font-sans text-xs select-none"
-      >
-        <div class="flex flex-col items-center space-y-1 py-3">
-          <div>Copy</div>
-          <div class="flex justify-center space-x-1">
-            <button
-              id="copy-right-to-left"
-              class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto"
-            >
-              <i class="fas fa-chevron-left text-[var(--text-color)]"></i>
-            </button>
-            <button
-              id="copy-left-to-right"
-              class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto"
-            >
-              <i class="fas fa-chevron-right text-[var(--text-color)]"></i>
-            </button>
-          </div>
+        class="flex justify-end items-center bg-[var(--header-bg)] text-[var(--header-text)] text-sm font-sans px-2 space-x-3 h-8 select-none">
+        <button id="new-left" class="flex items-center space-x-1 hover:underline">
+          <i class="fas fa-file-alt"></i>
+          <span>New</span>
+        </button>
+        <div class="relative group">
+          <button id="open-left" class="flex items-center space-x-1 hover:underline">
+            <i class="fas fa-folder"></i>
+            <span>File Upload</span>
+          </button>
+          <input type="file" id="file-left" accept=".json,.xlsx" class="hidden" />
         </div>
-        <div
-          class="flex flex-col justify-center space-y-1 py-3 border-t border-[var(--border-color)]"
-        >
-          <div>Differences</div>
-          <label
-            class="bg-[var(--border-color)] hover:bg-[#555] rounded w-20 h-8 flex items-center justify-center mx-auto cursor-pointer"
-          >
-            <input id="compare" type="checkbox" class="mr-1" />
-            Compare
-          </label>
+        <div class="relative group">
+          <button id="save-left" class="flex items-center space-x-1 hover:underline">
+            <i class="fas fa-save"></i>
+            <span>Save</span>
+          </button>
         </div>
       </div>
-      <!-- Right Panel -->
-      <div class="flex flex-col w-1/2 border border-[var(--border-color)]">
+      <div class="flex items-center bg-[var(--header-bg)] text-xs font-sans px-2 space-x-1 h-7 select-none">
+        <button id="text-left"
+          class="bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold">
+          Text
+        </button>
+        <button id="tree-left" class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]">
+          Tree
+        </button>
+        <button id="table-left" class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]">
+          Table
+        </button>
+        <button id="indented-left" class="format-button" data-format="indented">
+          <i class="fas fa-align-left"></i>
+        </button>
+        <button id="smart-left" class="format-button" data-format="smart">
+          <i class="fas fa-align-center"></i>
+        </button>
+        <button id="compact-left" class="format-button" data-format="compact">
+          <i class="fas fa-align-right"></i>
+        </button>
+        <button class="tree-button hidden" id="expandAll-left" data-format="expand">
+          <i class="fas fa-expand"></i>
+        </button>
+        <button class="tree-button hidden" id="collapseAll-left" data-format="collapse">
+          <i class="fas fa-compress"></i>
+        </button>
+      </div>
+      <div id="left-container" class="flex-1 bg-[var(--editor-bg)] text-[var(--text-color)] font-mono text-xs relative">
         <div
-          class="flex justify-end items-center bg-[var(--header-bg)] text-[var(--header-text)] text-sm font-sans px-2 space-x-3 h-8 select-none"
-        >
-          <button
-            id="new-right"
-            class="flex items-center space-x-1 hover:underline"
-          >
-            <i class="fas fa-file-alt"></i>
-            <span>New</span>
+          class="absolute top-0 left-0 w-6 bg-[var(--border-color)] text-[var(--text-color)] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right">
+          1
+        </div>
+        <textarea id="left-editor" aria-label="Code editor left pane" spellcheck="false"
+          class="w-full h-full bg-transparent text-[var(--text-color)] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"></textarea>
+      </div>
+    </div>
+    <!-- Middle Panel -->
+    <div
+      class="flex flex-col justify-center bg-[var(--editor-bg)] w-32 max-h-full text-center text-[var(--text-color)] font-sans text-xs select-none">
+      <!-- Custom Icon & Popup Trigger -->
+      <div class="flex flex-col items-center space-y-1 py-3 border-t border-[var(--border-color)]">
+        <div>Copy filter</div>
+        <button id="popup-button"
+          class="text-white bg-blue-600 hover:bg-blue-700 rounded w-10 h-10 flex items-center justify-center">
+          <i class="fas fa-filter"></i>
+        </button>
+      </div>
+      <div class="flex flex-col items-center space-y-1 py-3">
+        <div>Copy</div>
+        <div class="flex justify-center space-x-1">
+          <button id="copy-right-to-left"
+            class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto">
+            <i class="fas fa-chevron-left text-[var(--text-color)]"></i>
           </button>
-          <div class="relative group">
-            <button
-              id="open-right"
-              class="flex items-center space-x-1 hover:underline"
-            >
-              <i class="fas fa-folder"></i>
-              <span>File Upload</span>
-            </button>
-            <input
-              type="file"
-              id="file-right"
-              accept=".json,.xlsx"
-              class="hidden"
-            />
-          </div>
-          <div class="relative group">
-            <button
-              id="save-right"
-              class="flex items-center space-x-1 hover:underline"
-            >
-              <i class="fas fa-save"></i>
-              <span>Save</span>
+          <button id="copy-left-to-right"
+            class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center mx-auto">
+            <i class="fas fa-chevron-right text-[var(--text-color)]"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex flex-col justify-center space-y-1 py-3 border-t border-[var(--border-color)]">
+        <div>Differences</div>
+        <label
+          class="bg-[var(--border-color)] hover:bg-[#555] rounded w-20 h-8 flex items-center justify-center mx-auto cursor-pointer">
+          <input id="compare" type="checkbox" class="mr-1" />
+          Compare
+        </label>
+      </div>
+    </div>
+    <!-- Right Panel -->
+    <div class="flex flex-col w-1/2 border border-[var(--border-color)]">
+      <div
+        class="flex justify-end items-center bg-[var(--header-bg)] text-[var(--header-text)] text-sm font-sans px-2 space-x-3 h-8 select-none">
+        <button id="new-right" class="flex items-center space-x-1 hover:underline">
+          <i class="fas fa-file-alt"></i>
+          <span>New</span>
+        </button>
+        <div class="relative group">
+          <button id="open-right" class="flex items-center space-x-1 hover:underline">
+            <i class="fas fa-folder"></i>
+            <span>File Upload</span>
+          </button>
+          <input type="file" id="file-right" accept=".json,.xlsx" class="hidden" />
+        </div>
+        <div class="relative group">
+          <button id="save-right" class="flex items-center space-x-1 hover:underline">
+            <i class="fas fa-save"></i>
+            <span>Save</span>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center bg-[var(--header-bg)] text-xs font-sans px-2 space-x-1 h-7 select-none">
+        <button id="text-right"
+          class="bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold">
+          Text
+        </button>
+        <button id="tree-right" class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]">
+          Tree
+        </button>
+        <button id="table-right" class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]">
+          Table
+        </button>
+        <button id="indented-right" class="format-button" data-format="indented">
+          <i class="fas fa-align-left"></i>
+        </button>
+        <button id="smart-right" class="format-button" data-format="smart">
+          <i class="fas fa-align-center"></i>
+        </button>
+        <button id="compact-right" class="format-button" data-format="compact">
+          <i class="fas fa-align-right"></i>
+        </button>
+        <button class="tree-button hidden" id="expandAll-right" data-format="expand">
+          <i class="fas fa-expand"></i>
+        </button>
+        <button class="tree-button hidden" id="collapseAll-right" data-format="collapse">
+          <i class="fas fa-compress"></i>
+        </button>
+      </div>
+      <div id="right-container"
+        class="flex-1 bg-[var(--editor-bg)] text-[var(--text-color)] font-mono text-xs relative overflow-auto">
+        <div
+          class="absolute top-0 left-0 w-6 bg-[var(--border-color)] text-[var(--text-color)] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right">
+          1
+        </div>
+        <textarea id="right-editor" aria-label="Code editor right pane" spellcheck="false"
+          class="w-full h-full bg-transparent text-[var(--text-color)] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"></textarea>
+      </div>
+    </div>
+
+    <!-- popup -->
+    <!-- Main content grid -->
+    <div id="popup-modal" class="hidden">
+      <div class="max-w-[900px] mx-auto mt-10 rounded shadow-lg"
+        style="background-color: var(--transform-modal-bg); color: var(--transform-modal-text);">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-2 rounded-t bg-transform-modal-header"
+          style="background-color: var(--transform-modal-header-bg); color: var(--transform-modal-header-text);">
+          <h1 class="font-semibold text-sm select-none">Transform</h1>
+          <div class="flex space-x-3 text-xs relative">
+            <!-- Settings Button and Dropdown -->
+            <div class="relative">
+              <button aria-label="Settings" id="settings-button" class="hover:text-gray-200">
+                <i class="fas fa-cog"></i>
+              </button>
+              <div id="settings-dropdown" class="dropdown-menu" style="background-color: var(--border-color);">
+                <!-- Uncomment and add data-language for other options if needed -->
+
+                <label style="color: var(--text-color);">
+                  <input type="checkbox" id="javascript-checkbox" data-language="javascript" checked> JavaScript
+                </label>
+              </div>
+            </div>
+            <button aria-label="Close" id="close-popup" class="hover:text-gray-200">
+              <i class="fas fa-times"></i>
             </button>
           </div>
         </div>
-        <div
-          class="flex items-center bg-[var(--header-bg)] text-xs font-sans px-2 space-x-1 h-7 select-none"
-        >
-          <button
-            id="text-right"
-            class="bg-[var(--editor-bg)] text-[var(--property-color)] rounded px-1.5 py-[1px] font-semibold"
-          >
-            Text
-          </button>
-          <button
-            id="tree-right"
-            class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]"
-          >
-            Tree
-          </button>
-          <button
-            id="table-right"
-            class="bg-[var(--button-bg)] text-[var(--button-text)] rounded px-1.5 py-[1px]"
-          >
-            Table
-          </button>
-          <button
-            id="indented-right"
-            class="format-button"
-            data-format="indented"
-          >
-            <i class="fas fa-align-left"></i>
-          </button>
-          <button id="smart-right" class="format-button" data-format="smart">
-            <i class="fas fa-align-center"></i>
-          </button>
-          <button
-            id="compact-right"
-            class="format-button"
-            data-format="compact"
-          >
-            <i class="fas fa-align-right"></i>
-          </button>
-          <button
-            class="tree-button hidden"
-            id="expandAll-right"
-            data-format="expand"
-          >
-            <i class="fas fa-expand"></i>
-          </button>
-          <button
-            class="tree-button hidden"
-            id="collapseAll-right"
-            data-format="collapse"
-          >
-            <i class="fas fa-compress"></i>
-          </button>
-        </div>
-        <div
-          id="right-container"
-          class="flex-1 text-[var(--text-color)] font-mono text-xs relative overflow-auto"
-        >
-          <div
-            class="absolute top-0 left-0 w-6 bg-[var(--border-color)] text-[#75715e] select-none font-mono text-xs leading-5 pt-1 pr-1 text-right"
-          >
-            1
+        <div class="grid grid-cols-12 gap-4 p-4">
+          <!-- Left side form -->
+          <div class="col-span-7 flex flex-col space-y-4">
+            <!-- Language section -->
+            <div>
+              <label class="font-semibold text-sm select-none" for="language">
+                Language
+              </label>
+              <p id="language-description" class="text-xs mt-1 leading-snug"
+                style="color: var(--transform-modal-text);">
+                <!-- Content will be updated by JavaScript -->
+              </p>
+            </div>
+
+            <!-- Path input -->
+            <div>
+              <label class="font-semibold text-sm select-none" for="path">Path</label>
+              <input id="path" type="text" readonly value="(document root)"
+                class="w-full mt-1 rounded border px-2 py-1 text-xs font-mono"
+                style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);" />
+            </div>
+
+            <!-- Wizard section -->
+            <details class="border rounded" open
+              style="border-color: var(--transform-modal-details-border); background-color: var(--transform-modal-details-bg);">
+              <summary class="cursor-pointer select-none font-semibold text-sm px-3 py-2">
+                Wizard
+              </summary>
+              <div class="p-3 space-y-4">
+                <!-- Filter row -->
+                <div class="flex flex-wrap gap-2 items-center">
+                  <label class="font-semibold text-xs w-14 select-none">Filter</label>
+                  <!-- Added scrollable-select class and adjusted width/height -->
+                  <select id="filter-key" class="text-xs border rounded px-2 py-1 w-[200px] h-[32px] scrollable-select"
+                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
+                    <option value="">Please select</option>
+                  </select>
+                  <select id="filter-operator" class="text-xs border rounded px-2 py-1 w-50"
+                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
+                    <option>==</option>
+                    <option>!=</option>
+                    <option>&lt;</option>
+                    <option>&lt;=</option>
+                    <option>&gt;</option>
+                    <option>&gt;=</option>
+                  </select>
+                  <input type="text" id="filter-value" aria-label="Filter value"
+                    class="text-xs border rounded px-2 py-1 w-[120px]"
+                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);" />
+                </div>
+
+                <!-- Sort row -->
+                <div class="flex flex-wrap gap-2 items-center">
+                  <label class="font-semibold text-xs w-14 select-none">Sort</label>
+                  <div class="flex flex-wrap w-[280px] text-xs">
+                    <!-- Added scrollable-select class and adjusted width/height -->
+                    <select id="sort-key" class="text-xs border rounded px-2 py-1 w-[250px] h-[32px] scrollable-select"
+                      style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
+                      <option value="">Please select</option>
+                    </select>
+                  </div>
+                  <select id="sort-order" class="text-xs border rounded px-2 py-1 w-[90px]"
+                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
+                    <option value="asc">ascending</option>
+                    <option value="desc">descending</option>
+                  </select>
+                </div>
+
+                <!-- Pick row -->
+                <div class="flex flex-wrap gap-2 items-center">
+                  <label class="font-semibold text-xs w-14 select-none">Pick</label>
+                  <select id="pick-keys" class="text-xs border rounded px-2 py-1 w-[400px]" multiple="multiple"
+                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
+                  </select>
+                </div>
+              </div>
+
+            </details>
+            <!-- Query textarea -->
+            <div>
+              <label for="query" class="font-semibold text-xs select-none block mb-1">Query</label>
+              <textarea id="query" rows="15" class="w-full resize-none rounded border font-mono text-xs p-2"
+                style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);"></textarea>
+            </div>
           </div>
-          <textarea
-            id="right-editor"
-            aria-label="Code editor right pane"
-            spellcheck="false"
-            class="w-full h-full bg-transparent text-[var(--text-color)] font-mono text-xs leading-5 pt-1 pl-8 resize-none outline-none border-none"
-          ></textarea>
+
+          <!-- Right side original and preview -->
+          <div class="col-span-5 flex flex-col space-y-4">
+            <!-- Original -->
+            <div class="flex flex-col border rounded" style="border-color: var(--transform-modal-details-border);">
+              <div class="border-b px-3 py-1 font-semibold text-xs select-none"
+                style="background-color: var(--transform-modal-details-bg); border-color: var(--transform-modal-details-border);">
+                Original
+              </div>
+              <div id="original-json-tree-container" class="p-3 font-mono text-xs overflow-auto max-h-[280px]"
+                style="height: 280px; background-color: var(--transform-modal-json-tree-bg); color: var(--transform-modal-json-tree-text);">
+                <!-- JSON Tree will be rendered here -->
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="flex flex-col border rounded" style="border-color: var(--transform-modal-details-border);">
+              <div class="border-b px-3 py-1 font-semibold text-xs select-none"
+                style="background-color: var(--transform-modal-details-bg); border-color: var(--transform-modal-details-border);">
+                Preview
+              </div>
+              <div id="preview-json-tree-container" class="p-3 font-mono text-xs overflow-auto max-h-[280px]"
+                style="height: 280px; background-color: var(--transform-modal-json-tree-bg); color: var(--transform-modal-json-tree-text);">
+                <!-- JSON Tree will be rendered here -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Transform button -->
+        <div class="flex justify-end border-gray-300 p-4 rounded-b"
+          style="background-color: var(--transform-modal-bg); border-color: var(--transform-modal-details-border);">
+          <button id="transform-button" class="text-sm px-4 py-2 rounded transition"
+            style="background-color: var(--transform-modal-button-bg); color: var(--transform-modal-header-text);">
+            Transform
+          </button>
         </div>
       </div>
     </div>
-    <script src="script.js"></script>
-  </body>
+  </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+
 </html>
