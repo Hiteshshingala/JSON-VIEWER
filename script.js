@@ -2,32 +2,30 @@
 var gk_isXlsx = false;
 var gk_xlsxFileLookup = {};
 var gk_fileData = {};
+
 function filledCell(cell) {
   return cell !== "" && cell != null;
 }
+
 function loadFileData(filename) {
   if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
     try {
-      var workbook = XLSX.read(gk_fileData[filename], { type: "base64" });
+      var workbook = XLSX.read(gk_fileData[filename], {
+        type: "base64"
+      });
       var firstSheetName = workbook.SheetNames[0];
       var worksheet = workbook.Sheets[firstSheetName];
       var jsonData = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         blankrows: false,
-        defval: "",
+        defval: ""
       });
       var filteredData = jsonData.filter((row) => row.some(filledCell));
-      var headerRowIndex = filteredData.findIndex(
-        (row, index) =>
-          row.filter(filledCell).length >=
-          filteredData[index + 1]?.filter(filledCell).length
-      );
+      var headerRowIndex = filteredData.findIndex((row, index) => row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length);
       if (headerRowIndex === -1 || headerRowIndex > 25) {
         headerRowIndex = 0;
       }
-      var csv = XLSX.utils.aoa_to_sheet(
-        filteredData.slice(headerRowIndex)
-      );
+      var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
       csv = XLSX.utils.sheet_to_csv(csv);
       return csv;
     } catch (e) {
@@ -39,35 +37,28 @@ function loadFileData(filename) {
 }
 
 // Initialize CodeMirror editors
-const leftEditor = CodeMirror.fromTextArea(
-  document.getElementById("left-editor"),
-  {
-    mode: "application/json",
-    height: "100%",
-    theme: "monokai",
-    lineNumbers: true,
-    lineWrapping: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-  }
-);
+const leftEditor = CodeMirror.fromTextArea(document.getElementById("left-editor"), {
+  mode: "application/json",
+  height: "100%",
+  theme: "monokai",
+  lineNumbers: true,
+  lineWrapping: true,
+  matchBrackets: true,
+  autoCloseBrackets: true
+});
 
-const rightEditor = CodeMirror.fromTextArea(
-  document.getElementById("right-editor"),
-  {
-    mode: "application/json",
-    height: "100%",
-    theme: "monokai",
-    lineNumbers: true,
-    lineWrapping: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-  }
-);
+const rightEditor = CodeMirror.fromTextArea(document.getElementById("right-editor"), {
+  mode: "application/json",
+  height: "100%",
+  theme: "monokai",
+  lineNumbers: true,
+  lineWrapping: true,
+  matchBrackets: true,
+  autoCloseBrackets: true
+});
 
 // Theme toggle functionality
-$(document).ready(function () {
-  // Load saved theme from localStorage
+$(document).ready(function () { // Load saved theme from localStorage
   const savedTheme = localStorage.getItem("theme") || "dark";
   if (savedTheme === "light") {
     $("body").attr("data-theme", "light");
@@ -78,7 +69,7 @@ $(document).ready(function () {
     $("body").attr("data-theme", "dark");
     $("#theme-toggle").prop("checked", false);
     leftEditor.setOption("theme", "monokai");
-    rightEditor.setOption("theme", "monokai");
+    rightEditor.setOption("theme", "monokai"); /* Ensure right editor also updates */
   }
 
   // Toggle theme on checkbox change
@@ -120,8 +111,6 @@ function formatJSON(editor, mode) {
   }
 }
 
-// Custom JSON Tree View with CodeMirror styling
-// This function is for the main editor panels
 function renderJSONTree(container, json, side) {
   try {
     const data = JSON.parse(json);
@@ -144,41 +133,40 @@ function renderModalJSONTree(containerId, json) {
     const data = JSON.parse(json);
     const tree = document.createElement("div");
     tree.className = "json-tree"; // Re-use existing tree styling
-    // Pass false for `includeActionMenu` for modal panels
-    // Pass true for `isOpen` to make arrays/objects open by default
     tree.appendChild(createTreeNode(data, "", true, "", "modal", false, true));
     container.innerHTML = "";
     container.appendChild(tree);
   } catch (e) {
-    container.innerHTML = `<pre style="color: red;">Invalid JSON: ${e.message}</pre>`;
+    container.innerHTML = `<pre style="color: red;">Invalid JSON: ${e.message
+      }</pre>`;
     console.error(`Error rendering JSON tree in modal (${containerId}):`, e);
   }
 }
 
 
-function createTreeNode(
-  data,
-  key = "",
-  isRoot = false,
-  path = "",
-  side = "left", // 'left', 'right', or 'modal'
+function createTreeNode(data, key = "", isRoot = false, path = "", side = "left", // 'left', 'right', or 'modal'
   includeActionMenu = true, // New parameter to control action menu
   isOpen = false // New parameter to control initial open state
 ) {
   const li = document.createElement("li");
-  li.id = `node-${side}-${path || "root"}`; // Make ID unique per side/modal
+  li.id = `node-${side}-${path || "root"
+    }`; // Make ID unique per side/modal
   if (typeof data === "object" && data !== null) {
     const isArray = Array.isArray(data);
     const toggle = document.createElement("span");
     toggle.className = "toggle";
-    toggle.addEventListener("click", () => {
+    // Only the toggle icon should expand/collapse
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent event from bubbling up to li if any parent listener exists
       toggle.classList.toggle("open");
       ul.style.display = ul.style.display === "none" ? "block" : "none";
     });
 
     const keySpan = document.createElement("span");
-    keySpan.className = `cm-property ${isArray ? "array" : "object"}`;
-    keySpan.id = `key-${side}-${path || "root"}`; // Make ID unique per side/modal
+    keySpan.className = `cm-property ${isArray ? "array" : "object"
+      }`;
+    keySpan.id = `key-${side}-${path || "root"
+      }`; // Make ID unique per side/modal
     keySpan.textContent = key ? `${key}: ` : isArray ? "Array" : "Object";
     li.appendChild(toggle);
     li.appendChild(keySpan);
@@ -198,13 +186,7 @@ function createTreeNode(
     if (isArray) {
       data.forEach((item, index) => {
         const childPath = path ? `${path}.${index}` : `${index}`;
-        const childLi = createTreeNode(
-          item,
-          `[${index}]`,
-          false,
-          childPath,
-          side,
-          includeActionMenu, // Pass the flag down
+        const childLi = createTreeNode(item, `[${index}]`, false, childPath, side, includeActionMenu, // Pass the flag down
           isOpen // Pass the flag down
         );
         ul.appendChild(childLi);
@@ -215,25 +197,18 @@ function createTreeNode(
         const childLi = createTreeNode(v, k, false, childPath, side, includeActionMenu, isOpen); // Pass the flag down
         ul.appendChild(childLi);
       });
-    }
-
-    li.appendChild(ul);
+    } li.appendChild(ul);
   } else {
     const keySpan = document.createElement("span");
     keySpan.className = "cm-property";
-    keySpan.id = `key-${side}-${path || "root"}`; // Make ID unique per side/modal
+    keySpan.id = `key-${side}-${path || "root"
+      }`; // Make ID unique per side/modal
     keySpan.textContent = key ? `${key}: ` : "";
 
     const valueSpan = document.createElement("span");
-    valueSpan.className =
-      typeof data === "string"
-        ? "cm-string"
-        : typeof data === "number"
-          ? "cm-number"
-          : typeof data === "boolean"
-            ? "cm-boolean"
-            : "cm-null";
-    valueSpan.id = `value-${side}-${path || "root"}`; // Make ID unique per side/modal
+    valueSpan.className = typeof data === "string" ? "cm-string" : typeof data === "number" ? "cm-number" : typeof data === "boolean" ? "cm-boolean" : "cm-null";
+    valueSpan.id = `value-${side}-${path || "root"
+      }`; // Make ID unique per side/modal
     valueSpan.textContent = JSON.stringify(data);
 
     li.appendChild(keySpan);
@@ -250,8 +225,7 @@ function renderTable(container, json) {
       throw new Error("JSON must be an object or array for table view");
     }
     const table = document.createElement("table");
-    table.className =
-      "w-full text-[var(--text-color)] border-collapse font-mono text-xs";
+    table.className = "w-full text-[var(--text-color)] border-collapse font-mono text-xs";
     const tbody = document.createElement("tbody");
     if (Array.isArray(data)) {
       const headers = Object.keys(data[0] || {});
@@ -259,8 +233,7 @@ function renderTable(container, json) {
       const headerRow = document.createElement("tr");
       headers.forEach((key) => {
         const th = document.createElement("th");
-        th.className =
-          "border border-[var(--border-color)] p-2 cm-property";
+        th.className = "border border-[var(--border-color)] p-2 cm-property";
         th.textContent = key;
         headerRow.appendChild(th);
       });
@@ -272,17 +245,9 @@ function renderTable(container, json) {
           const td = document.createElement("td");
           td.className = "border border-[var(--border-color)] p-2";
           const value = item[key];
-          td.className +=
-            " " +
-            (typeof value === "string"
-              ? "cm-string"
-              : typeof value === "number"
-                ? "cm-number"
-                : typeof value === "boolean"
-                  ? "cm-boolean"
-                  : value === null
-                    ? "cm-null"
-                    : "");
+          td.className += " " + (
+            typeof value === "string" ? "cm-string" : typeof value === "number" ? "cm-number" : typeof value === "boolean" ? "cm-boolean" : value === null ? "cm-null" : ""
+          );
           td.textContent = JSON.stringify(value || "");
           tr.appendChild(td);
         });
@@ -292,29 +257,19 @@ function renderTable(container, json) {
       Object.entries(data).forEach(([key, value]) => {
         const tr = document.createElement("tr");
         const tdKey = document.createElement("td");
-        tdKey.className =
-          "border border-[var(--border-color)] p-2 cm-property";
+        tdKey.className = "border border-[var(--border-color)] p-2 cm-property";
         tdKey.textContent = key;
         const tdValue = document.createElement("td");
         tdValue.className = "border border-[var(--border-color)] p-2";
-        tdValue.className +=
-          " " +
-          (typeof value === "string"
-            ? "cm-string"
-            : typeof value === "number"
-              ? "cm-number"
-              : typeof value === "boolean"
-                ? "cm-boolean"
-                : value === null
-                  ? "cm-null"
-                  : "");
+        tdValue.className += " " + (
+          typeof value === "string" ? "cm-string" : typeof value === "number" ? "cm-number" : typeof value === "boolean" ? "cm-boolean" : value === null ? "cm-null" : ""
+        );
         tdValue.textContent = JSON.stringify(value);
         tr.appendChild(tdKey);
         tr.appendChild(tdValue);
         tbody.appendChild(tr);
       });
-    }
-    table.appendChild(tbody);
+    } table.appendChild(tbody);
     container.innerHTML = "";
     container.appendChild(table);
   } catch (e) {
@@ -328,7 +283,7 @@ function toggleView(side, mode) {
   const buttons = {
     text: document.getElementById(`text-${side}`),
     tree: document.getElementById(`tree-${side}`),
-    table: document.getElementById(`table-${side}`),
+    table: document.getElementById(`table-${side}`)
   };
   const formatButtons = [
     document.getElementById(`indented-${side}`),
@@ -384,9 +339,7 @@ function toggleView(side, mode) {
       btn.classList.add("hidden");
       btn.classList.remove("active");
     });
-  }
-
-  container.innerHTML = "";
+  } container.innerHTML = "";
   container.style.height = mode === "table" ? "450px" : "828px";
   container.style.width = "100%";
   container.style.overflow = "hidden";
@@ -413,8 +366,10 @@ function toggleView(side, mode) {
       table.style.display = "block";
     }
   }
-  if (side === "left") leftViewMode = mode;
-  else rightViewMode = mode;
+  if (side === "left")
+    leftViewMode = mode;
+  else
+    rightViewMode = mode;
   applyHighlights(side);
 }
 
@@ -452,13 +407,11 @@ function handleFileUpload(input, editor) {
           fileContent = loadFileData(file.name);
         } else {
           fileContent = event.target.result;
-        }
-        editor.setValue(fileContent);
+        } editor.setValue(fileContent);
         toggleView(input.id.includes("left") ? "left" : "right", "text");
 
         // Update Original and Preview in the Transform modal if it's the left editor
-        if (input.id === "file-left") {
-          // Now render as tree in the modal
+        if (input.id === "file-left") { // Now render as tree in the modal
           renderModalJSONTree("original-json-tree-container", fileContent);
           renderModalJSONTree("preview-json-tree-container", fileContent); // Initially same as original
           populateWizardOptions(JSON.parse(fileContent));
@@ -504,7 +457,7 @@ handleFileUpload(document.getElementById("file-right"), rightEditor);
 document.getElementById("save-left").addEventListener("click", () => {
   try {
     const blob = new Blob([leftEditor.getValue()], {
-      type: "application/json",
+      type: "application/json"
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -519,7 +472,7 @@ document.getElementById("save-left").addEventListener("click", () => {
 document.getElementById("save-right").addEventListener("click", () => {
   try {
     const blob = new Blob([rightEditor.getValue()], {
-      type: "application/json",
+      type: "application/json"
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -533,20 +486,16 @@ document.getElementById("save-right").addEventListener("click", () => {
 });
 
 // Copy button handlers
-document
-  .getElementById("copy-left-to-right")
-  .addEventListener("click", () => {
-    rightEditor.setValue(leftEditor.getValue());
-    clearHighlights("right");
-    toggleView("right", rightViewMode);
-  });
-document
-  .getElementById("copy-right-to-left")
-  .addEventListener("click", () => {
-    leftEditor.setValue(rightEditor.getValue());
-    clearHighlights("left");
-    toggleView("left", leftViewMode);
-  });
+document.getElementById("copy-left-to-right").addEventListener("click", () => {
+  rightEditor.setValue(leftEditor.getValue());
+  clearHighlights("right");
+  toggleView("right", rightViewMode);
+});
+document.getElementById("copy-right-to-left").addEventListener("click", () => {
+  leftEditor.setValue(rightEditor.getValue());
+  clearHighlights("left");
+  toggleView("left", leftViewMode);
+});
 
 // Format button handlers
 document.getElementById("indented-left").addEventListener("click", () => {
@@ -558,11 +507,9 @@ document.getElementById("smart-left").addEventListener("click", () => {
 document.getElementById("compact-left").addEventListener("click", () => {
   formatJSON(leftEditor, "compact");
 });
-document
-  .getElementById("indented-right")
-  .addEventListener("click", () => {
-    formatJSON(rightEditor, "indented");
-  });
+document.getElementById("indented-right").addEventListener("click", () => {
+  formatJSON(rightEditor, "indented");
+});
 document.getElementById("smart-right").addEventListener("click", () => {
   formatJSON(rightEditor, "smart");
 });
@@ -601,26 +548,18 @@ document.getElementById("table-right").addEventListener("click", () => {
 });
 
 // Expand/Collapse button handlers
-document
-  .getElementById("expandAll-left")
-  .addEventListener("click", () => {
-    toggleTreeNodes("left", "expand");
-  });
-document
-  .getElementById("collapseAll-left")
-  .addEventListener("click", () => {
-    toggleTreeNodes("left", "collapse");
-  });
-document
-  .getElementById("expandAll-right")
-  .addEventListener("click", () => {
-    toggleTreeNodes("right", "expand");
-  });
-document
-  .getElementById("collapseAll-right")
-  .addEventListener("click", () => {
-    toggleTreeNodes("right", "collapse");
-  });
+document.getElementById("expandAll-left").addEventListener("click", () => {
+  toggleTreeNodes("left", "expand");
+});
+document.getElementById("collapseAll-left").addEventListener("click", () => {
+  toggleTreeNodes("left", "collapse");
+});
+document.getElementById("expandAll-right").addEventListener("click", () => {
+  toggleTreeNodes("right", "expand");
+});
+document.getElementById("collapseAll-right").addEventListener("click", () => {
+  toggleTreeNodes("right", "collapse");
+});
 
 // Clear highlights
 function clearHighlights(side) {
@@ -632,12 +571,9 @@ function clearHighlights(side) {
   } else {
     rightHighlights.forEach((h) => h.clear && h.clear());
     rightHighlights = [];
-  }
-  container
-    .querySelectorAll(".highlight-diff, .highlight-parent")
-    .forEach((el) => {
-      el.classList.remove("highlight-diff", "highlight-parent");
-    });
+  } container.querySelectorAll(".highlight-diff, .highlight-parent").forEach((el) => {
+    el.classList.remove("highlight-diff", "highlight-parent");
+  });
 }
 
 // Apply highlights
@@ -650,28 +586,21 @@ function applyHighlights(side) {
   if (viewMode === "text") {
     highlights.forEach((h) => {
       if (h.line != null) {
-        const lineHandle = editor.addLineClass(
-          h.line,
-          "background",
-          h.isParent ? "highlight-parent" : "highlight-diff"
-        );
+        const lineHandle = editor.addLineClass(h.line, "background", h.isParent ? "highlight-parent" : "highlight-diff");
         highlights[highlights.indexOf(h)] = {
           ...h,
-          clear: () =>
-            editor.removeLineClass(
-              lineHandle,
-              "background",
-              h.isParent ? "highlight-parent" : "highlight-diff"
-            ),
+          clear: () => editor.removeLineClass(lineHandle, "background", h.isParent ? "highlight-parent" : "highlight-diff")
         };
       }
     });
   } else if (viewMode === "tree") {
-    highlights.forEach((h) => {
-      // Ensure IDs are unique for each side
-      const keyId = `key-${side}-${h.path.replace(/\./g, "\\.")}`;
-      const valueId = `value-${side}-${h.path.replace(/\./g, "\\.")}`;
-      const nodeId = `node-${side}-${h.path.replace(/\./g, "\\.")}`;
+    highlights.forEach((h) => { // Ensure IDs are unique for each side
+      const keyId = `key-${side}-${h.path.replace(/\./g, "\\.")
+        }`;
+      const valueId = `value-${side}-${h.path.replace(/\./g, "\\.")
+        }`;
+      const nodeId = `node-${side}-${h.path.replace(/\./g, "\\.")
+        }`;
 
       const keyElement = container.querySelector(`#${keyId}`);
       const valueElement = container.querySelector(`#${valueId}`);
@@ -701,31 +630,22 @@ function applyHighlights(side) {
   } else if (viewMode === "table") {
     highlights.forEach((h) => {
       const pathParts = h.path.split(".");
-      const rowIndex =
-        pathParts.length > 1
-          ? parseInt(pathParts[pathParts.length - 2])
-          : -1;
-      const key = pathParts[pathParts.length - 1];
+      const rowIndex = pathParts.length > 1 ? parseInt(pathParts[pathParts.length - 2]) : -1;
+      const key = pathParts[path.length - 1];
       const table = container.querySelector("table");
       if (table) {
         if (Array.isArray(JSON.parse(editor.getValue()))) {
           if (rowIndex >= 0) {
-            const row = table.querySelector(
-              `tbody tr:nth-child(${rowIndex + 1})`
-            );
+            const row = table.querySelector(`tbody tr:nth-child(${rowIndex + 1
+              })`);
             if (row) {
-              const headers = Array.from(
-                table.querySelectorAll("thead th")
-              ).map((th) => th.textContent);
+              const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent);
               const colIndex = headers.indexOf(key);
               if (colIndex >= 0) {
-                const cell = row.querySelector(
-                  `td:nth-child(${colIndex + 1})`
-                );
+                const cell = row.querySelector(`td:nth-child(${colIndex + 1
+                  })`);
                 if (cell) {
-                  cell.classList.add(
-                    h.isParent ? "highlight-parent" : "highlight-diff"
-                  );
+                  cell.classList.add(h.isParent ? "highlight-parent" : "highlight-diff");
                 }
               }
             }
@@ -736,9 +656,7 @@ function applyHighlights(side) {
             const keyCell = row.querySelector("td:first-child");
             if (keyCell && keyCell.textContent === key) {
               row.querySelectorAll("td").forEach((cell) => {
-                cell.classList.add(
-                  h.isParent ? "highlight-parent" : "highlight-diff"
-                );
+                cell.classList.add(h.isParent ? "highlight-parent" : "highlight-diff");
               });
             }
           });
@@ -760,7 +678,10 @@ document.getElementById("compare").addEventListener("change", (e) => {
       toggleView("left", "tree");
       toggleView("right", "tree");
 
-      const { leftDiffs, rightDiffs } = compareJSON(leftJSON, rightJSON);
+      const {
+        leftDiffs,
+        rightDiffs
+      } = compareJSON(leftJSON, rightJSON);
       leftHighlights = leftDiffs;
       rightHighlights = rightDiffs;
 
@@ -786,20 +707,13 @@ function compareJSON(obj1, obj2, path = "") {
   const leftLines = leftEditor.getValue().split("\n");
   const rightLines = rightEditor.getValue().split("\n");
 
-  function addDiff(
-    side,
-    diffPath,
-    isParent = false,
-    isArrayIndex = false
-  ) {
+  function addDiff(side, diffPath, isParent = false, isArrayIndex = false) {
     const editor = side === "left" ? leftEditor : rightEditor;
     const lines = side === "left" ? leftLines : rightLines;
     let line = null;
     if (diffPath !== "root") {
       const key = diffPath.split(".").pop();
-      const regex = isArrayIndex
-        ? new RegExp(`\\[${key}\\]\\s*:`)
-        : new RegExp(`"${key}"\\s*:`);
+      const regex = isArrayIndex ? new RegExp(`\\[${key}\\]\\s*:`) : new RegExp(`"${key}"\\s*:`);
       lines.forEach((lineText, index) => {
         if (lineText.match(regex)) {
           line = index;
@@ -810,12 +724,15 @@ function compareJSON(obj1, obj2, path = "") {
       path: diffPath,
       line,
       isParent,
-      isArrayIndex,
+      isArrayIndex
     });
   }
 
   function compare(obj1, obj2, currentPath) {
-    if (obj1 === obj2) return;
+    if (obj1 === obj2)
+      return;
+
+
 
     if (typeof obj1 !== typeof obj2 || obj1 === null || obj2 === null) {
       addDiff("left", currentPath);
@@ -847,9 +764,7 @@ function compareJSON(obj1, obj2, path = "") {
         } else if (!obj1.hasOwnProperty(key)) {
           addDiff("right", newPath, false, isArrayIndex);
           hasDiffs = true;
-        } else if (
-          JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])
-        ) {
+        } else if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
           addDiff("left", newPath, false, isArrayIndex);
           addDiff("right", newPath, false, isArrayIndex);
           hasDiffs = true;
@@ -877,7 +792,10 @@ function compareJSON(obj1, obj2, path = "") {
   }
 
   compare(obj1, obj2, "");
-  return { leftDiffs, rightDiffs };
+  return {
+    leftDiffs,
+    rightDiffs
+  };
 }
 
 // Global clipboard
@@ -891,13 +809,11 @@ function createActionMenu(path, side) {
 
   const button = document.createElement("button");
   button.innerHTML = "⋮";
-  button.className =
-    "text-[var(--text-color)] bg-[var(--border-color)] hover:bg-[#555] rounded px-1";
+  button.className = "text-[var(--text-color)] bg-[var(--border-color)] hover:bg-[#555] rounded px-1";
   button.style.cursor = "pointer";
 
   const menu = document.createElement("div");
-  menu.className =
-    "absolute bg-[var(--border-color)] text-[var(--text-color)] rounded shadow p-1 hidden z-50";
+  menu.className = "absolute bg-[var(--border-color)] text-[var(--text-color)] rounded shadow p-1 hidden z-50";
   menu.style.marginTop = "5px";
 
   const actions = ["Copy", "Paste"];
@@ -919,7 +835,10 @@ function createActionMenu(path, side) {
   button.addEventListener("click", (e) => {
     e.stopPropagation();
     document.querySelectorAll(".json-tree div.absolute").forEach((el) => {
-      if (el !== menu) el.classList.add("hidden");
+      if (el !== menu)
+        el.classList.add("hidden");
+
+
     });
     menu.classList.toggle("hidden");
   });
@@ -941,7 +860,7 @@ function handleAction(action, path, side) {
     console.warn("Paste attempted in non-tree view:", {
       side,
       viewMode,
-      path,
+      path
     });
     return;
   }
@@ -984,13 +903,16 @@ function handleAction(action, path, side) {
     for (const key of keys) {
       currentPath.push(key);
       parent = parent[isNaN(key) ? key : parseInt(key)];
-      if (!parent) throw new Error(`Invalid path segment: ${key}`);
+      if (!parent)
+        throw new Error(`Invalid path segment: ${key}`);
+
+
     }
   } catch (e) {
     alert("Invalid path: " + e.message);
     console.error("Path Navigation Error:", e.message, {
       path,
-      currentPath,
+      currentPath
     });
     return;
   }
@@ -998,28 +920,28 @@ function handleAction(action, path, side) {
   if (action === "Copy") {
     if (!parent.hasOwnProperty(lastKey)) {
       alert("Key does not exist in JSON.");
-      console.error("Key not found:", { lastKey, parent });
+      console.error("Key not found:", {
+        lastKey,
+        parent
+      });
       return;
     }
 
-    clipboard = JSON.parse(JSON.stringify(parent[lastKey])); // Deep copy
+    clipboard = JSON.parse(JSON.stringify(parent[lastKey]));
+    // Deep copy
 
     // Ensure the data is copied to system clipboard for external usage
-    try {
-      // Convert the data to a string before copying
+    try { // Convert the data to a string before copying
       const clipboardContent = JSON.stringify(clipboard, null, 2);
 
       // Use the Clipboard API to copy to system clipboard if available, otherwise fallback
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard
-          .writeText(clipboardContent)
-          .then(() => {
-            console.log("Successfully copied to clipboard");
-          })
-          .catch((err) => {
-            console.error("Failed to copy to clipboard: ", err);
-            copyToClipboardFallback(clipboardContent);
-          });
+        navigator.clipboard.writeText(clipboardContent).then(() => {
+          console.log("Successfully copied to clipboard");
+        }).catch((err) => {
+          console.error("Failed to copy to clipboard: ", err);
+          copyToClipboardFallback(clipboardContent);
+        });
       } else {
         copyToClipboardFallback(clipboardContent);
       }
@@ -1030,7 +952,10 @@ function handleAction(action, path, side) {
   } else if (action === "Paste" && clipboard != null) {
     if (!Array.isArray(parent) && typeof parent !== "object") {
       alert("Can only paste into arrays or objects.");
-      console.error("Invalid paste target:", { parent, path });
+      console.error("Invalid paste target:", {
+        parent,
+        path
+      });
       return;
     }
 
@@ -1040,13 +965,14 @@ function handleAction(action, path, side) {
       } else {
         const newKey = generateUniqueKey(parent);
         parent[newKey] = JSON.parse(JSON.stringify(clipboard)); // Deep copy
-      }
-
-      editor.setValue(JSON.stringify(json, null, 2));
+      } editor.setValue(JSON.stringify(json, null, 2));
       toggleView(side, viewMode);
     } catch (e) {
       alert("Error pasting: " + e.message);
-      console.error("Paste Error:", e.message, { path, clipboard });
+      console.error("Paste Error:", e.message, {
+        path,
+        clipboard
+      });
     }
   } else if (action === "Paste") {
     alert("Cannot paste: Clipboard is empty.");
@@ -1070,7 +996,10 @@ function copyToClipboardFallback(text) {
 
 function generateUniqueKey(obj) {
   let i = 1;
-  while (obj.hasOwnProperty("newKey" + i)) i++;
+  while (obj.hasOwnProperty("newKey" + i))
+    i++;
+
+
   return "newKey" + i;
 }
 
@@ -1107,15 +1036,29 @@ window.addEventListener("click", function (event) {
 const languageDescription = document.getElementById('language-description');
 const queryTextarea = document.getElementById('query');
 const settingsDropdown = document.getElementById('settings-dropdown');
-const filterKeySelect = document.getElementById('filter-key');
+const filterKeyTreeSelect = document.getElementById('filter-key-tree-select');
+const filterKeySelected = filterKeyTreeSelect.querySelector('.selected');
+const filterKeyDropdown = filterKeyTreeSelect.querySelector('.dropdown');
+const clearFilterButton = document.getElementById('clear-filter'); // New: Clear Filter button
+
 const filterOperatorSelect = document.getElementById('filter-operator');
 const filterValueInput = document.getElementById('filter-value');
-const sortKeySelect = document.getElementById('sort-key');
+
+const sortKeyTreeSelect = document.getElementById('sort-key-tree-select');
+const sortKeySelected = sortKeyTreeSelect.querySelector('.selected');
+const sortKeyDropdown = sortKeyTreeSelect.querySelector('.dropdown');
+const clearSortButton = document.getElementById('clear-sort'); // New: Clear Sort button
+
 const sortOrderSelect = document.getElementById('sort-order');
-const pickKeysSelect = document.getElementById('pick-keys');
+const pickKeysTreeSelect = document.getElementById('pick-keys-tree-select'); // New: Pick keys tree-select
+const pickKeysSelected = pickKeysTreeSelect.querySelector('.selected'); // New: Pick keys selected div
+const pickKeysDropdown = pickKeysTreeSelect.querySelector('.dropdown'); // New: Pick keys dropdown ul
+const clearPickButton = document.getElementById('clear-pick'); // New: Clear Pick button
+
 const transformButton = document.getElementById('transform-button');
 
 let currentOriginalData = null;
+let selectedPickKeys = new Set(); // To store multiple selected pick keys
 
 function updateTransformModalContent(language) {
   let descriptionHtml = '';
@@ -1136,9 +1079,9 @@ function updateTransformModalContent(language) {
             <code class="bg-gray-200 rounded px-1 font-mono text-xs text-gray-800">_.get</code>, etcetera.
           `;
       queryTemplate = `function query (data) {
-  return _.chain(data)
-    .value()
-}`;
+            return _.chain(data)
+              .value()
+          }`;
       break;
     default:
       descriptionHtml = `
@@ -1170,22 +1113,17 @@ function getAllKeys(data, prefix = '') {
   function recurse(currentData, currentPath) {
     if (typeof currentData === 'object' && currentData !== null) {
       if (Array.isArray(currentData)) {
-        // For arrays, iterate through items and get keys if items are objects
         currentData.forEach((item, index) => {
           if (typeof item === 'object' && item !== null) {
-            // We don't add array indices as filterable/sortable keys directly,
-            // but we do recurse into their objects.
-            recurse(item, currentPath); // No index in path for array items' keys
+            recurse(item, currentPath); // Recurse into array items' keys
           }
         });
       } else {
-        // For objects, add keys and recurse
         Object.keys(currentData).forEach(key => {
           const newPath = currentPath ? `${currentPath}.${key}` : key;
-          // Only add keys that are not objects or arrays themselves
-          if (typeof currentData[key] !== 'object' || currentData[key] === null) {
-            keys.add(newPath); // Add the full path of the key
-          }
+          // Always add the full path of the current key
+          keys.add(newPath);
+          // Recurse into nested objects/arrays
           recurse(currentData[key], newPath);
         });
       }
@@ -1196,50 +1134,355 @@ function getAllKeys(data, prefix = '') {
   return Array.from(keys).sort();
 }
 
+// Helper to build nested tree-select options
+function buildTreeOptions(keys, containerElement, isMultiSelect = false) {
+  containerElement.innerHTML = ''; // Clear existing options
+  const root = {};
+
+  keys.forEach(key => {
+    const parts = key.split('.');
+    let current = root;
+    parts.forEach((part, i) => {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+      if (i === parts.length - 1) {
+        current.__value = key; // Store the full path
+      }
+    });
+  });
+
+  function createList(node, currentPath = '') {
+    const ul = document.createElement('ul');
+    ul.classList.add('children');
+    if (currentPath !== '') {
+      ul.classList.add('hidden'); // Hide children by default
+    }
+
+    for (const key in node) {
+      if (key === '__value') continue;
+
+      const li = document.createElement('li');
+      const newPath = currentPath ? `${currentPath}.${key}` : key;
+      li.dataset.path = newPath; // Add data-path for easier selection/disabling
+
+      // Check if the current node has children (i.e., it's a parent object/array)
+      const hasChildren = Object.keys(node[key]).length > (node[key].__value ? 1 : 0);
+
+      if (hasChildren) {
+        const toggleSpan = document.createElement('span');
+        toggleSpan.classList.add('parent-toggle');
+        toggleSpan.textContent = ''; // Content will be set by CSS pseudo-element
+        li.appendChild(toggleSpan);
+
+        const keySpan = document.createElement('span');
+        keySpan.textContent = key;
+        keySpan.classList.add('parent'); // Keep parent class for styling if needed
+        // For multi-select, parent nodes are also selectable as individual keys
+        if (isMultiSelect) {
+          // Only add data-value and class if it's a selectable parent (i.e., not just a container for children)
+          // In this specific case, we want parent *objects* to be selectable as a whole,
+          // but not automatically select their children.
+          keySpan.dataset.value = newPath;
+          keySpan.classList.add('tree-option-multi');
+        }
+        li.appendChild(keySpan);
+
+        li.appendChild(createList(node[key], newPath));
+      } else {
+        // This is a leaf node (a property with a primitive value)
+        li.textContent = key;
+        li.dataset.value = newPath; // Store full path
+        if (isMultiSelect) {
+          li.classList.add('tree-option-multi'); // Add a class for easier selection
+        } else {
+          li.classList.add('tree-option'); // Add a class for easier selection
+        }
+      }
+      ul.appendChild(li);
+    }
+    return ul;
+  }
+
+  containerElement.appendChild(createList(root));
+}
+
+
 // Populate filter, sort, and pick dropdowns
 function populateWizardOptions(data) {
   currentOriginalData = data; // Store original data for transformations
   const keys = getAllKeys(data);
 
-  // Clear existing options
-  filterKeySelect.innerHTML = '<option value="">Please select</option>';
-  sortKeySelect.innerHTML = '<option value="">Please select</option>';
-  pickKeysSelect.innerHTML = ''; // Select2 handles its own placeholder
+  // Populate Filter Key Tree Select
+  buildTreeOptions(keys, filterKeyDropdown);
+  filterKeySelected.textContent = "Please select";
+  filterKeyTreeSelect.dataset.value = ""; // Clear selected value
+  clearFilterButton.style.display = 'none'; // Hide clear button initially
 
-  keys.forEach(key => {
-    const option = document.createElement('option');
-    option.value = key;
-    option.textContent = key;
-    filterKeySelect.appendChild(option.cloneNode(true));
-    sortKeySelect.appendChild(option.cloneNode(true));
-    pickKeysSelect.appendChild(option.cloneNode(true));
-  });
+  // Populate Sort Key Tree Select
+  buildTreeOptions(keys, sortKeyDropdown);
+  sortKeySelected.textContent = "Please select";
+  sortKeyTreeSelect.dataset.value = ""; // Clear selected value
+  clearSortButton.style.display = 'none'; // Hide clear button initially
 
-  // Initialize Select2 for pick-keys
-  $(pickKeysSelect).select2({
-    placeholder: "Select keys to pick",
-    allowClear: true
-  });
+  // Populate Pick Keys Tree Select (multi-select)
+  buildTreeOptions(keys, pickKeysDropdown, true); // Pass true for isMultiSelect
+  updatePickKeysSelectedDisplay(); // Update display based on selectedPickKeys
+
+  // Re-attach event listeners for tree-select options
+  attachTreeSelectListeners();
 }
+
+// Attach event listeners for the custom tree-select dropdowns
+function attachTreeSelectListeners() {
+  // Handle parent clicks for filter and sort tree-selects (text part)
+  document.querySelectorAll("#filter-key-tree-select .parent, #sort-key-tree-select .parent").forEach(parent => {
+    parent.removeEventListener("click", handleParentClick); // Prevent duplicate listeners
+    parent.addEventListener("click", handleParentClick);
+  });
+
+  // Handle parent toggle clicks for all tree-selects, including pick
+  document.querySelectorAll(".tree-select .parent-toggle").forEach(toggle => {
+    toggle.removeEventListener("click", handleParentToggleClick); // Prevent duplicate listeners
+    toggle.addEventListener("click", handleParentToggleClick);
+  });
+
+  // Handle single option selection for filter and sort tree-selects (leaf nodes)
+  document.querySelectorAll("#filter-key-tree-select .tree-option, #sort-key-tree-select .tree-option").forEach(option => {
+    option.removeEventListener("click", handleTreeOptionClick); // Prevent duplicate listeners
+    option.addEventListener("click", handleTreeOptionClick);
+  });
+
+  // Handle multi-option selection for pick keys tree-select (both leaf and parent nodes)
+  document.querySelectorAll("#pick-keys-tree-select .tree-option-multi").forEach(option => {
+    option.removeEventListener("click", handlePickKeyClick); // Prevent duplicate listeners
+    option.addEventListener("click", handlePickKeyClick);
+  });
+
+  // Toggle dropdown for filter tree-select
+  filterKeySelected.removeEventListener("click", toggleFilterDropdown);
+  filterKeySelected.addEventListener("click", toggleFilterDropdown);
+
+  // Toggle dropdown for sort tree-select
+  sortKeySelected.removeEventListener("click", toggleSortDropdown);
+  sortKeySelected.addEventListener("click", toggleSortDropdown);
+
+  // Toggle dropdown for pick keys tree-select
+  pickKeysSelected.removeEventListener("click", togglePickKeysDropdown);
+  pickKeysSelected.addEventListener("click", togglePickKeysDropdown);
+
+  // New: Add event listeners for clear buttons
+  clearFilterButton.addEventListener('click', clearFilter);
+  clearSortButton.addEventListener('click', clearSort);
+  clearPickButton.addEventListener('click', clearPick);
+}
+
+function handleParentClick() {
+  // This function is for the text part of the parent, not the toggle icon.
+  // The actual toggling is now handled by handleParentToggleClick.
+  // For filter/sort, clicking the text should select it if it's a leaf.
+  // For pick, clicking the text should select/deselect it.
+  // No change needed here for the toggle behavior.
+}
+
+// NEW: Function to handle clicks on the parent toggle icon
+function handleParentToggleClick(event) {
+  event.stopPropagation(); // Prevent event from bubbling up to parent li or selected div
+  const children = this.nextElementSibling.nextElementSibling; // Skip the keySpan to get the <ul>
+  if (children) {
+    this.classList.toggle("open");
+    children.classList.toggle("hidden");
+  }
+  // REMOVED: The call to handlePickKeyClick here.
+  // Clicking the toggle icon should ONLY expand/collapse, not select the key.
+}
+
+function handleTreeOptionClick() {
+  const parentTreeSelect = this.closest('.tree-select');
+  const selectedDiv = parentTreeSelect.querySelector('.selected');
+  const dropdownUl = parentTreeSelect.querySelector('.dropdown');
+  const clearBtn = parentTreeSelect.querySelector('.clear-button'); // Get the clear button
+
+  selectedDiv.textContent = this.textContent;
+  parentTreeSelect.dataset.value = this.dataset.value; // Store the actual value
+  dropdownUl.classList.add("hidden");
+  clearBtn.style.display = 'block'; // Show clear button
+  updateQueryAndPreview();
+}
+
+// Modified handler for "Pick" options (no checkbox)
+function handlePickKeyClick(event) {
+  event.stopPropagation(); // Prevent event from bubbling up to parent li or selected div
+  const key = event.target.dataset.value; // Get the full path from data-value
+
+  // Only toggle selection if the clicked element has a data-value (i.e., it's a selectable key)
+  if (key) {
+    if (selectedPickKeys.has(key)) {
+      selectedPickKeys.delete(key);
+    } else {
+      selectedPickKeys.add(key);
+    }
+    updatePickKeysSelectedDisplay();
+    updateQueryAndPreview();
+  }
+}
+
+function updatePickKeysSelectedDisplay() {
+  pickKeysSelected.innerHTML = ''; // Clear current display
+  if (selectedPickKeys.size === 0) {
+    const placeholder = document.createElement('span');
+    placeholder.className = 'placeholder';
+    placeholder.textContent = 'Select keys to pick';
+    pickKeysSelected.appendChild(placeholder);
+    clearPickButton.style.display = 'none'; // Hide clear button
+  } else {
+    selectedPickKeys.forEach(key => {
+      const tag = document.createElement('span');
+      tag.className = 'bg-[var(--transform-modal-details-bg)] border border-[var(--transform-modal-input-border)] rounded px-2 py-1 text-xs flex items-center mr-1 mb-1';
+      tag.textContent = key.split('.').pop(); // Display only the last part of the key
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'ml-1 text-[var(--transform-modal-text)] hover:text-red-500';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        selectedPickKeys.delete(key);
+        updatePickKeysSelectedDisplay();
+        updateQueryAndPreview();
+      };
+      tag.appendChild(removeBtn);
+      pickKeysSelected.appendChild(tag);
+    });
+    clearPickButton.style.display = 'block'; // Show clear button
+  }
+  // Visually mark selected items in the dropdown
+  document.querySelectorAll("#pick-keys-tree-select .tree-option-multi").forEach(option => {
+    if (selectedPickKeys.has(option.dataset.value)) {
+      option.style.backgroundColor = 'var(--transform-modal-hover-bg)';
+      option.style.color = 'var(--transform-modal-header-text)';
+    } else {
+      option.style.backgroundColor = '';
+      option.style.color = '';
+    }
+  });
+
+  // --- New Logic for disabling/enabling sub-objects ---
+  const allPickOptions = pickKeysDropdown.querySelectorAll('.tree-option-multi');
+  allPickOptions.forEach(option => {
+    option.classList.remove('disabled'); // Reset all to enabled
+  });
+
+  selectedPickKeys.forEach(selectedKey => {
+    // If a parent key is selected, disable all its children
+    allPickOptions.forEach(option => {
+      const optionPath = option.dataset.value;
+      if (optionPath.startsWith(selectedKey + '.') && optionPath !== selectedKey) {
+        option.classList.add('disabled');
+        // Also remove from selectedPickKeys if it's a child of a newly selected parent
+        if (selectedPickKeys.has(optionPath)) {
+          selectedPickKeys.delete(optionPath);
+          // Re-render selected tags if a child was deselected
+          updatePickKeysSelectedDisplay(); // Recursive call, but safe due to Set operations
+        }
+      }
+    });
+  });
+  // --- End New Logic ---
+}
+
+
+function toggleFilterDropdown() {
+  filterKeyDropdown.classList.toggle("hidden");
+  // Close other dropdowns if open
+  sortKeyDropdown.classList.add("hidden");
+  pickKeysDropdown.classList.add("hidden");
+}
+
+function toggleSortDropdown() {
+  sortKeyDropdown.classList.toggle("hidden");
+  // Close other dropdowns if open
+  filterKeyDropdown.classList.add("hidden");
+  pickKeysDropdown.classList.add("hidden");
+}
+
+function togglePickKeysDropdown() {
+  pickKeysDropdown.classList.toggle("hidden");
+  // Close other dropdowns if open
+  filterKeyDropdown.classList.add("hidden");
+  sortKeyDropdown.classList.add("hidden");
+}
+
+// Close dropdowns if clicked outside
+window.addEventListener('click', function (event) {
+  if (!filterKeyTreeSelect.contains(event.target)) {
+    filterKeyDropdown.classList.add('hidden');
+  }
+  if (!sortKeyTreeSelect.contains(event.target)) {
+    sortKeyDropdown.classList.add('hidden');
+  }
+  if (!pickKeysTreeSelect.contains(event.target)) {
+    pickKeysDropdown.classList.add('hidden');
+  }
+});
+
 
 // Reset wizard options
 function resetWizardOptions() {
-  filterKeySelect.innerHTML = '<option value="">Please select</option>';
+  filterKeySelected.textContent = "Please select";
+  filterKeyTreeSelect.dataset.value = "";
+  filterKeyDropdown.innerHTML = ''; // Clear dropdown content
+  clearFilterButton.style.display = 'none'; // Hide clear button
+
   filterOperatorSelect.value = '==';
   filterValueInput.value = '';
-  sortKeySelect.innerHTML = '<option value="">Please select</option>';
-  sortOrderSelect.value = 'asc'; // Changed to 'asc' for consistency
-  $(pickKeysSelect).empty().trigger('change'); // Clear Select2
+
+  sortKeySelected.textContent = "Please select";
+  sortKeyTreeSelect.dataset.value = "";
+  sortKeyDropdown.innerHTML = ''; // Clear dropdown content
+  clearSortButton.style.display = 'none'; // Hide clear button
+
+  sortOrderSelect.value = 'asc';
+  selectedPickKeys.clear(); // Clear selected pick keys
+  pickKeysDropdown.innerHTML = ''; // Clear dropdown content
+  updatePickKeysSelectedDisplay(); // Update display
+  clearPickButton.style.display = 'none'; // Hide clear button
+
   currentOriginalData = null;
   updateQueryAndPreview(); // Clear query and preview
 }
 
+// New: Clear Filter function
+function clearFilter() {
+  filterKeySelected.textContent = "Please select";
+  filterKeyTreeSelect.dataset.value = "";
+  filterOperatorSelect.value = '==';
+  filterValueInput.value = '';
+  clearFilterButton.style.display = 'none';
+  updateQueryAndPreview();
+}
+
+// New: Clear Sort function
+function clearSort() {
+  sortKeySelected.textContent = "Please select";
+  sortKeyTreeSelect.dataset.value = "";
+  sortOrderSelect.value = 'asc';
+  clearSortButton.style.display = 'none';
+  updateQueryAndPreview();
+}
+
+// New: Clear Pick function
+function clearPick() {
+  selectedPickKeys.clear();
+  updatePickKeysSelectedDisplay(); // This will also hide the clear button
+  updateQueryAndPreview();
+}
+
+
 // Generate query based on wizard selections
 function generateQuery() {
-  let query = `function query (data) {
-  let result = _.chain(data)`;
+  let query = `function query (data) {let result = _.chain(data)`;
 
-  const filterKey = filterKeySelect.value;
+  const filterKey = filterKeyTreeSelect.dataset.value; // Get value from data-value
   const filterOperator = filterOperatorSelect.value;
   const filterValue = filterValueInput.value;
 
@@ -1257,21 +1500,18 @@ function generateQuery() {
     }
 
     // Use _.get for nested properties
-    query += `
-    .filter(item => _.get(item, '${filterKey}') ${filterOperator} ${parsedFilterValue})`;
+    query += `.filter(item => _.get(item, '${filterKey}') ${filterOperator} ${parsedFilterValue})`;
   }
 
-  const sortKey = sortKeySelect.value;
+  const sortKey = sortKeyTreeSelect.dataset.value; // Get value from data-value
   const sortOrder = sortOrderSelect.value; // This will be 'asc' or 'desc'
 
   if (sortKey) {
-    // Use _.orderBy with a custom iteratee for nested properties
-    // The order array should contain 'asc' or 'desc' strings
     query += `
     .orderBy([item => _.get(item, '${sortKey}')], ['${sortOrder}'])`;
   }
 
-  const pickKeys = $(pickKeysSelect).val(); // Get selected values from Select2
+  const pickKeys = Array.from(selectedPickKeys); // Get selected values from the Set
   if (pickKeys && pickKeys.length > 0) {
     const formattedPickKeys = pickKeys.map(key => `'${key}'`).join(', ');
     query += `
@@ -1279,9 +1519,9 @@ function generateQuery() {
   }
 
   query += `
-    .value()
-  return result;
-}`;
+        .value()
+        return result;
+      }`;
   return query;
 }
 
@@ -1292,15 +1532,13 @@ function updateQueryAndPreview() {
 
   if (currentOriginalData) {
     try {
-      // Create a function from the query string
-      // This is generally unsafe if query comes from untrusted sources.
-      // For this demo, assuming it's generated internally or from trusted input.
       const queryFunction = new Function('data', '_', generatedQuery.replace('function query (data) {', '').replace('}', ''));
       const transformedData = queryFunction(currentOriginalData, _); // Pass Lodash as _
 
       renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2));
     } catch (e) {
-      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing query: ${e.message}</pre>`;
+      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing query: ${e.message
+        }</pre>`;
       console.error("Error executing query:", e);
     }
   } else {
@@ -1309,25 +1547,22 @@ function updateQueryAndPreview() {
 }
 
 // Event listeners for wizard controls
-filterKeySelect.addEventListener('change', updateQueryAndPreview);
 filterOperatorSelect.addEventListener('change', updateQueryAndPreview);
 filterValueInput.addEventListener('input', updateQueryAndPreview);
-sortKeySelect.addEventListener('change', updateQueryAndPreview);
 sortOrderSelect.addEventListener('change', updateQueryAndPreview);
-$(pickKeysSelect).on('change', updateQueryAndPreview); // Select2 change event
+// No direct listener for pickKeysSelected as changes are handled by checkbox changes
 
 // Event listener for manual query textarea changes
 queryTextarea.addEventListener('input', function () {
-  // If user manually edits, we might want to disable wizard or just let them
-  // For now, we'll just try to run their custom query for preview
   if (currentOriginalData) {
     try {
       const customQuery = queryTextarea.value;
       const queryFunction = new Function('data', '_', customQuery.replace('function query (data) {', '').replace('}', ''));
       const transformedData = queryFunction(currentOriginalData, _);
-      renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2));
+      // renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2)); // This line was commented out in original
     } catch (e) {
-      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing custom query: ${e.message}</pre>`;
+      document.getElementById("preview-json-tree-container").innerHTML = `<pre style="color: red;">Error executing custom query: ${e.message
+        }</pre>`;
       console.error("Error executing custom query:", e);
     }
   }
@@ -1364,9 +1599,5 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     updateTransformModalContent('javascript'); // Default to JavaScript
   }
-  // Initialize Select2 on page load for the pick-keys dropdown
-  $(pickKeysSelect).select2({
-    placeholder: "Select keys to pick",
-    allowClear: true
-  });
+  // No longer need Select2 initialization for pick-keys
 });

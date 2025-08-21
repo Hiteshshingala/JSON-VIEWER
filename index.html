@@ -202,9 +202,18 @@
               </button>
               <div id="settings-dropdown" class="dropdown-menu" style="background-color: var(--border-color);">
                 <!-- Uncomment and add data-language for other options if needed -->
-
-                <label style="color: var(--text-color);">
-                  <input type="checkbox" id="javascript-checkbox" data-language="javascript" checked> JavaScript
+                <!-- <label>
+                  <input type="checkbox" id="json-query-checkbox" data-language="json-query"> JSON Query
+                  </label>
+                    <label>
+                        <input type="checkbox" id="jmespath-checkbox" data-language="jmespath"> JMESPath
+                    </label>
+                    <label>
+                     <input type="checkbox" id="jsonpath-checkbox" data-language="jsonpath" checked> JSONPath
+                    </label> -->
+                <label style="color: var(--text-color);"> <input type="checkbox" id="javascript-checkbox"
+                    data-language="javascript" checked>
+                  JavaScript
                 </label>
               </div>
             </div>
@@ -245,11 +254,16 @@
                 <!-- Filter row -->
                 <div class="flex flex-wrap gap-2 items-center">
                   <label class="font-semibold text-xs w-14 select-none">Filter</label>
-                  <!-- Added scrollable-select class and adjusted width/height -->
-                  <select id="filter-key" class="text-xs border rounded px-2 py-1 w-[200px] h-[32px] scrollable-select"
-                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
-                    <option value="">Please select</option>
-                  </select>
+                  <!-- Replaced select with tree-select -->
+                  <div id="filter-key-tree-select" class="tree-select">
+                    <div class="selected-wrapper">
+                      <div class="selected">Please select</div>
+                      <button type="button" class="clear-button" id="clear-filter">&times;</button>
+                    </div>
+                    <ul class="dropdown hidden">
+                      <!-- Options will be dynamically populated here -->
+                    </ul>
+                  </div>
                   <select id="filter-operator" class="text-xs border rounded px-2 py-1 w-50"
                     style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
                     <option>==</option>
@@ -267,12 +281,14 @@
                 <!-- Sort row -->
                 <div class="flex flex-wrap gap-2 items-center">
                   <label class="font-semibold text-xs w-14 select-none">Sort</label>
-                  <div class="flex flex-wrap w-[280px] text-xs">
-                    <!-- Added scrollable-select class and adjusted width/height -->
-                    <select id="sort-key" class="text-xs border rounded px-2 py-1 w-[250px] h-[32px] scrollable-select"
-                      style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
-                      <option value="">Please select</option>
-                    </select>
+                  <div id="sort-key-tree-select" class="tree-select">
+                    <div class="selected-wrapper">
+                      <div class="selected">Please select</div>
+                      <button type="button" class="clear-button" id="clear-sort">&times;</button>
+                    </div>
+                    <ul class="dropdown hidden">
+                      <!-- Options will be dynamically populated here -->
+                    </ul>
                   </div>
                   <select id="sort-order" class="text-xs border rounded px-2 py-1 w-[90px]"
                     style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
@@ -284,9 +300,18 @@
                 <!-- Pick row -->
                 <div class="flex flex-wrap gap-2 items-center">
                   <label class="font-semibold text-xs w-14 select-none">Pick</label>
-                  <select id="pick-keys" class="text-xs border rounded px-2 py-1 w-[400px]" multiple="multiple"
-                    style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);">
-                  </select>
+                  <!-- Replaced select with tree-select for multi-selection -->
+                  <div id="pick-keys-tree-select" class="tree-select w-[400px] h-auto">
+                    <div class="selected-wrapper">
+                      <div class="selected flex flex-wrap items-center min-h-[32px] p-1">
+                        <span class="placeholder">Select keys to pick</span>
+                      </div>
+                      <button type="button" class="clear-button" id="clear-pick">&times;</button>
+                    </div>
+                    <ul class="dropdown hidden">
+                      <!-- Options will be dynamically populated here -->
+                    </ul>
+                  </div>
                 </div>
               </div>
 
@@ -294,8 +319,8 @@
             <!-- Query textarea -->
             <div>
               <label for="query" class="font-semibold text-xs select-none block mb-1">Query</label>
-              <textarea id="query" rows="15" class="w-full resize-none rounded border font-mono text-xs p-2"
-                style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border);"></textarea>
+              <textarea id="query" rows="13" class="w-full resize-none rounded border font-mono text-xs p-2 "
+                style="background-color: var(--transform-modal-input-bg); color: var(--transform-modal-input-text); border-color: var(--transform-modal-input-border); height: 180px;"></textarea>
             </div>
           </div>
 
@@ -324,6 +349,7 @@
                 <!-- JSON Tree will be rendered here -->
               </div>
             </div>
+
           </div>
         </div>
         <!-- Transform button -->
@@ -336,7 +362,6 @@
         </div>
       </div>
     </div>
-  </div>
   </div>
   <script src="script.js"></script>
 </body>

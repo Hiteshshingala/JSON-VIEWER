@@ -35,6 +35,7 @@
   --transform-modal-json-tree-text: #f8f8f2;
   --transform-modal-button-bg: #8cae6e;
   --transform-modal-button-hover-bg: #7a9e5f;
+  --transform-modal-hover-bg: #4D4D4D;
 }
 
 [data-theme="light"] {
@@ -74,6 +75,7 @@
   --transform-modal-json-tree-text: #333333;
   --transform-modal-button-bg: #8cae6e;
   --transform-modal-button-hover-bg: #7a9e5f;
+  --transform-modal-hover-bg: #4D4D4D;
 }
 
 .CodeMirror {
@@ -431,11 +433,8 @@ table th.highlight-parent {
 .transform-modal-content img {
   max-width: 100%;
   height: auto;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  margin: 15px auto;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 /* Scrollbar styling for code areas */
@@ -626,16 +625,182 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-  background-color: var(--button-bg) !important;
-  color: var(--button-text) !important;
+  background-color: var(--transform-modal-hover-bg) !important;
+  color: var(--transform-modal-header-text) !important;
 }
 
 .select2-container--default .select2-results__option--selected {
-  background-color: var(--transform-modal-details-bg) !important;
-  color: var(--transform-modal-text) !important;
+  background-color: var(--transform-modal-hover-bg) !important;
+  color: var(--transform-modal-header-text) !important;
 }
 
 .select2-dropdown {
   background-color: var(--transform-modal-input-bg) !important;
   border: 1px solid var(--transform-modal-input-border) !important;
+}
+
+/* Tree Select Specific Styles */
+.tree-select {
+  border: 1px solid var(--transform-modal-input-border);
+  cursor: pointer;
+  position: relative;
+  background-color: var(--transform-modal-input-bg);
+  color: var(--transform-modal-input-text);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  /* text-xs */
+  height: auto;
+  /* Allow tree-select to take natural height or be controlled by flex-grow */
+  flex-grow: 1;
+  /* Allow it to grow within a flex container */
+}
+
+.tree-select .selected {
+  padding: 0.5rem 0.75rem;
+  /* px-2 py-1 */
+  white-space: normal;
+  /* Allow text to wrap */
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  max-height: 80px;
+  /* Set a max height for the selected area */
+  line-height: 1.25rem;
+  flex-grow: 1;
+  display: flex;
+  /* Use flexbox for tags */
+  flex-wrap: wrap;
+  /* Allow tags to wrap */
+  align-items: flex-start;
+  /* Align items to the start of the cross axis */
+  gap: 4px;
+  /* Space between tags */
+}
+
+.tree-select .dropdown {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--transform-modal-input-border);
+  position: absolute;
+  width: 100%;
+  background-color: var(--transform-modal-input-bg);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+}
+
+.tree-select .dropdown li {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.tree-select .dropdown li:hover {
+  background-color: var(--transform-modal-hover-bg);
+  color: var(--transform-modal-header-text);
+}
+
+.tree-select .dropdown li:hover.parent-toggle:hover {
+  background-color: none;
+  color: none;
+}
+
+.tree-select .parent {
+  font-weight: bold;
+  cursor: default;
+  display: inline-block;
+  padding: 5px 0;
+}
+
+.tree-select .children {
+  list-style: none;
+  margin: 0;
+  padding-left: 15px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* New style for parent toggle in tree-select */
+.tree-select .parent-toggle {
+  cursor: pointer;
+  user-select: none;
+  margin-right: 5px;
+  display: inline-block;
+  width: 10px;
+}
+
+.tree-select .parent-toggle::before {
+  content: "\25B6";
+  display: inline-block;
+  width: 10px;
+}
+
+.tree-select .parent-toggle.open::before {
+  content: "\25BC";
+}
+
+span.parent.tree-option-multi {
+  width: 330px;
+}
+
+/* Style for the clear button */
+.clear-button {
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 1rem;
+  color: var(--transform-modal-text);
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  display: none;
+  /* Hidden by default */
+}
+
+.clear-button:hover {
+  color: #ff0000;
+  /* Red on hover */
+}
+
+.tree-select .selected-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 0.5rem;
+  width: 100%;
+}
+
+/* Adjust the width of the filter and sort tree-selects in the wizard section */
+#filter-key-tree-select,
+#sort-key-tree-select {
+  width: 200px;
+  max-width: calc(100% - 140px);
+}
+
+/* Ensure the parent container of filter/sort rows allows flex behavior */
+.flex-wrap.gap-2.items-center {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Specific styles for the query textarea */
+#query {
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  resize: vertical;
+  /* Allow vertical resizing */
+  min-height: 100px;
+  /* Minimum height */
+}
+
+/* Styles for disabled pick options */
+.tree-select .tree-option-multi.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
