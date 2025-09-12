@@ -1511,12 +1511,75 @@ function generateQuery() {
     .orderBy([item => _.get(item, '${sortKey}')], ['${sortOrder}'])`;
   }
 
+
+
   const pickKeys = Array.from(selectedPickKeys); // Get selected values from the Set
   if (pickKeys && pickKeys.length > 0) {
-    const formattedPickKeys = pickKeys.map(key => `'${key}'`).join(', ');
+    // const formattedPickKeys = pickKeys.map(key => `'${key}'`).join(', ');
+    //         query += `
+    // .map(item => _.pick(item, [${formattedPickKeys}]))`;
+    //     }
+
+    const formattedPickKeys = JSON.stringify(pickKeys);
+    console.log("@@@@@formattedPickKeys", formattedPickKeys);
+
     query += `
-    .map(item => _.pick(item, [${formattedPickKeys}]))`;
+                .map(item => {
+                    const result = {};
+
+                    const setDeepValue = (target, pathParts, value) => {
+                        let ref = target;
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            const key = pathParts[i];
+                            if (_.isArray(ref[key])) {
+                                // If it's an array, we assume it's already handled
+                                ref = ref[key];
+                            } else {
+                                if (!ref[key]) {
+                                    ref[key] = {};
+                                }
+                                ref = ref[key];
+                            }
+                        }
+                        ref[pathParts[pathParts.length - 1]] = value;
+                    };
+
+                    const pickDeep = (source, target, pathParts) => {
+                        if (!source || pathParts.length === 0) return;
+
+                        const key = pathParts[0];
+                        const remaining = pathParts.slice(1);
+                        const currentValue = source[key];
+
+                        if (_.isArray(currentValue)) {
+                            if (!target[key]) target[key] = [];
+
+                            currentValue.forEach((subItem, index) => {
+                                if (!target[key][index]) target[key][index] = {};
+                                pickDeep(subItem, target[key][index], remaining);
+                            });
+
+                        } else if (_.isObject(currentValue)) {
+                            if (!target[key]) target[key] = {};
+                            pickDeep(currentValue, target[key], remaining);
+
+                        } else {
+                            if (remaining.length === 0 && currentValue !== undefined) {
+                                setDeepValue(target, pathParts, currentValue);
+                            }
+                        }
+                    };
+
+                    ${formattedPickKeys}.forEach(path => {
+                        const pathParts = path.split(".");
+                        pickDeep(item, result, pathParts);
+                    });
+
+                    return result;
+                })
+            `;
   }
+
 
   query += `
         .value()
@@ -1532,7 +1595,7 @@ function updateQueryAndPreview() {
 
   if (currentOriginalData) {
     try {
-      const queryFunction = new Function('data', '_', generatedQuery.replace('function query (data) {', '').replace('}', ''));
+      const queryFunction = new Function("data", "_", ` ${generatedQuery} return query(data);`);
       const transformedData = queryFunction(currentOriginalData, _); // Pass Lodash as _
 
       renderModalJSONTree("preview-json-tree-container", JSON.stringify(transformedData, null, 2));
@@ -1569,18 +1632,27 @@ queryTextarea.addEventListener('input', function () {
 });
 
 // Transform button action
+
 transformButton.addEventListener('click', function () {
   if (currentOriginalData) {
     try {
       const finalQuery = queryTextarea.value;
-      const queryFunction = new Function('data', '_', finalQuery.replace('function query (data) {', '').replace('}', ''));
+
+      // Extract the transformation logic cleanly
+      const queryBody = finalQuery
+        .replace('function query (data) {', '')
+        .replace(/}$/, ''); // Remove only the last closing brace
+
+      const queryFunction = new Function('data', '_', `
+                const formattedPickKeys = ${JSON.stringify(Array.from(selectedPickKeys))};
+                ${queryBody}
+            `);
+
       const transformedData = queryFunction(currentOriginalData, _);
 
-      // Set the transformed data to the RIGHT editor
       rightEditor.setValue(JSON.stringify(transformedData, null, 2));
-      toggleView("right", "text"); // Switch right panel to text view to show transformed JSON
-
-      document.getElementById("popup-modal").classList.add("hidden"); // Close modal
+      toggleView("right", "text");
+      document.getElementById("popup-modal").classList.add("hidden");
     } catch (e) {
       alert("Error applying transformation: " + e.message);
       console.error("Transformation application error:", e);
