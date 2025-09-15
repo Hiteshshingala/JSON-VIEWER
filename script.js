@@ -1556,12 +1556,24 @@ function generateQuery() {
 
                             currentValue.forEach((subItem, index) => {
                                 if (!target[key][index]) target[key][index] = {};
-                                pickDeep(subItem, target[key][index], remaining);
+
+                                if (remaining.length === 0) {
+                                    // Leaf value for array case
+                                    target[key][index] = subItem;
+                                } else {
+                                    pickDeep(subItem, target[key][index], remaining);
+                                }
                             });
 
                         } else if (_.isObject(currentValue)) {
                             if (!target[key]) target[key] = {};
-                            pickDeep(currentValue, target[key], remaining);
+
+                            if (remaining.length === 0) {
+                                // Leaf value for object case
+                                target[key] = currentValue;
+                            } else {
+                                pickDeep(currentValue, target[key], remaining);
+                            }
 
                         } else {
                             if (remaining.length === 0 && currentValue !== undefined) {
