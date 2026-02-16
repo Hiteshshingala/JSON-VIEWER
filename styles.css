@@ -804,3 +804,21 @@ span.parent.tree-option-multi {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.show-more-node {
+  margin: 6px 0;
+}
+
+.show-more-btn {
+  background: var(--border-color);
+  color: var(--text-color);
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.show-more-btn:hover {
+  background: #555;
+}

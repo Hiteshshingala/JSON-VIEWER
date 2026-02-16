@@ -124,6 +124,15 @@
           </button>
         </div>
       </div>
+      <!-- <div class="flex flex-col justify-center space-y-1 py-3 border-t border-[var(--border-color)]">
+        <div>Differences</div>
+        <label
+          class="bg-[var(--border-color)] hover:bg-[#555] rounded w-20 h-8 flex items-center justify-center mx-auto cursor-pointer">
+          <input id="compare" type="checkbox" class="mr-1" />
+          Compare
+        </label>
+      </div> -->
+
       <div class="flex flex-col justify-center space-y-1 py-3 border-t border-[var(--border-color)]">
         <div>Differences</div>
         <label
@@ -131,6 +140,26 @@
           <input id="compare" type="checkbox" class="mr-1" />
           Compare
         </label>
+
+        <!-- NEW: Difference Info Section -->
+        <div id="diff-controls" class="hidden flex flex-col items-center mt-2 space-y-1">
+
+          <div id="diff-count" class="text-xs">
+            0 differences
+          </div>
+
+          <div class="flex space-x-1">
+            <button id="diff-prev"
+              class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center">
+              ▲
+            </button>
+
+            <button id="diff-next"
+              class="bg-[var(--border-color)] hover:bg-[#555] rounded w-10 h-8 flex items-center justify-center">
+              ▼
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Right Panel -->

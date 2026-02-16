@@ -2,6 +2,15 @@
 var gk_isXlsx = false;
 var gk_xlsxFileLookup = {};
 var gk_fileData = {};
+// Tree pagination state
+const TREE_PAGE_SIZE = 100;
+let treeLimits = {
+  left: TREE_PAGE_SIZE,
+  right: TREE_PAGE_SIZE,
+  modal: TREE_PAGE_SIZE
+};
+let allDiffPaths = [];
+let currentDiffIndex = 0;
 
 function filledCell(cell) {
   return cell !== "" && cell != null;
@@ -184,13 +193,47 @@ function createTreeNode(data, key = "", isRoot = false, path = "", side = "left"
     }
 
     if (isArray) {
-      data.forEach((item, index) => {
+      const limit = treeLimits[side] || TREE_PAGE_SIZE;
+      const visibleItems = data.slice(0, limit);
+
+      visibleItems.forEach((item, index) => {
         const childPath = path ? `${path}.${index}` : `${index}`;
-        const childLi = createTreeNode(item, `[${index}]`, false, childPath, side, includeActionMenu, // Pass the flag down
-          isOpen // Pass the flag down
+        ul.appendChild(
+          createTreeNode(item, `[${index}]`, false, childPath, side, includeActionMenu, isOpen)
         );
-        ul.appendChild(childLi);
       });
+
+      // 🔽 Show More button
+      if (data.length > limit) {
+        const moreLi = document.createElement("li");
+        moreLi.className = "show-more-node";
+
+        const btn = document.createElement("button");
+        btn.textContent = `Show more (${data.length - limit})`;
+        btn.className = "show-more-btn";
+
+        btn.onclick = (e) => {
+          e.stopPropagation();
+
+          const otherSide = side === "left" ? "right" : "left";
+
+          // 🔥 Increase both sides limit
+          treeLimits[side] += TREE_PAGE_SIZE;
+          treeLimits[otherSide] += TREE_PAGE_SIZE;
+
+          // 🔥 Re-render both trees
+          toggleView("left", "tree");
+          toggleView("right", "tree");
+
+          // 🔥 Re-apply highlights if compare is active
+          applyHighlights("left");
+          applyHighlights("right");
+        };
+
+
+        moreLi.appendChild(btn);
+        ul.appendChild(moreLi);
+      }
     } else {
       Object.entries(data).forEach(([k, v]) => {
         const childPath = path ? `${path}.${k}` : k;
@@ -594,34 +637,29 @@ function applyHighlights(side) {
       }
     });
   } else if (viewMode === "tree") {
-    highlights.forEach((h) => { // Ensure IDs are unique for each side
-      const keyId = `key-${side}-${h.path.replace(/\./g, "\\.")
-        }`;
-      const valueId = `value-${side}-${h.path.replace(/\./g, "\\.")
-        }`;
-      const nodeId = `node-${side}-${h.path.replace(/\./g, "\\.")
-        }`;
+    highlights.forEach((h) => {
 
-      const keyElement = container.querySelector(`#${keyId}`);
-      const valueElement = container.querySelector(`#${valueId}`);
-      const nodeElement = container.querySelector(`#${nodeId}`);
+    const safePath = CSS.escape(h.path);
 
-      if (h.isParent) {
-        if (keyElement) {
-          keyElement.classList.add("highlight-parent");
-        }
-      } else {
-        if (keyElement) {
-          keyElement.classList.add("highlight-diff");
-        }
-        if (valueElement) {
-          valueElement.classList.add("highlight-diff");
-        }
-        if (nodeElement && !valueElement) {
-          nodeElement.classList.add("highlight-diff");
-        }
-      }
-    });
+    const keyElement =
+      container.querySelector(`#key-${side}-${safePath}`);
+
+    const valueElement =
+      container.querySelector(`#value-${side}-${safePath}`);
+
+    const nodeElement =
+      container.querySelector(`#node-${side}-${safePath}`);
+
+    if (keyElement)
+      keyElement.classList.add("highlight-diff");
+
+    if (valueElement)
+      valueElement.classList.add("highlight-diff");
+
+    if (nodeElement)
+      nodeElement.classList.add("highlight-parent");
+  });
+    
     const tree = container.querySelector(".json-tree");
     if (tree) {
       tree.style.height = "828px";
@@ -670,6 +708,8 @@ function applyHighlights(side) {
 document.getElementById("compare").addEventListener("change", (e) => {
   clearHighlights("left");
   clearHighlights("right");
+  const diffControls = document.getElementById("diff-controls");
+  const diffCount = document.getElementById("diff-count");
   if (e.target.checked) {
     try {
       const leftJSON = JSON.parse(leftEditor.getValue());
@@ -678,123 +718,190 @@ document.getElementById("compare").addEventListener("change", (e) => {
       toggleView("left", "tree");
       toggleView("right", "tree");
 
-      const {
-        leftDiffs,
-        rightDiffs
-      } = compareJSON(leftJSON, rightJSON);
+      const { leftDiffs, rightDiffs } = compareJSON(leftJSON, rightJSON);
+
       leftHighlights = leftDiffs;
       rightHighlights = rightDiffs;
 
-      if (leftDiffs.length === 0 && rightDiffs.length === 0) {
-        alert("No differences found.");
-      } else {
-        applyHighlights("left");
-        applyHighlights("right");
-      }
-    } catch (e) {
+      applyHighlights("left");
+      applyHighlights("right");
+
+      // 🔥 Store all diff paths
+      allDiffPaths = leftDiffs
+        .filter(d => !d.isParent)
+        .map(d => d.path);
+
+      currentDiffIndex = 0;
+
+      diffCount.innerText = `${allDiffPaths.length} differences`;
+      diffControls.classList.remove("hidden");
+
+    } catch (err) {
       alert("Invalid JSON in one or both editors.");
-      toggleView("left", "text");
-      toggleView("right", "text");
+      diffControls.classList.add("hidden");
     }
-    e.target.checked = false;
+
+  } else {
+    diffControls.classList.add("hidden");
+    allDiffPaths = [];
   }
 });
 
-// JSON comparison function
-function compareJSON(obj1, obj2, path = "") {
-  const leftDiffs = [];
-  const rightDiffs = [];
-  const leftLines = leftEditor.getValue().split("\n");
-  const rightLines = rightEditor.getValue().split("\n");
 
-  function addDiff(side, diffPath, isParent = false, isArrayIndex = false) {
-    const editor = side === "left" ? leftEditor : rightEditor;
-    const lines = side === "left" ? leftLines : rightLines;
-    let line = null;
-    if (diffPath !== "root") {
-      const key = diffPath.split(".").pop();
-      const regex = isArrayIndex ? new RegExp(`\\[${key}\\]\\s*:`) : new RegExp(`"${key}"\\s*:`);
-      lines.forEach((lineText, index) => {
-        if (lineText.match(regex)) {
-          line = index;
-        }
-      });
+
+function scrollToDiff(index) {
+
+  if (!allDiffPaths.length) return;
+
+  const path = allDiffPaths[index];
+
+  scrollSideToPath("left", path);
+  scrollSideToPath("right", path);
+}
+
+function scrollSideToPath(side, path) {
+
+  if (!path) return;
+
+  const container = document.getElementById(`${side}-container`);
+  const parts = path.split(".");
+
+  // 🔥 Expand all parent nodes first
+  let currentPath = "";
+  for (let i = 0; i < parts.length; i++) {
+
+    currentPath = currentPath
+      ? `${currentPath}.${parts[i]}`
+      : parts[i];
+
+    const parentNode =
+      container.querySelector(
+        `#node-${side}-${CSS.escape(currentPath)} > .toggle`
+      );
+
+    if (parentNode) {
+      parentNode.classList.add("open");
+      const ul = parentNode.parentElement.querySelector("ul");
+      if (ul) ul.style.display = "block";
     }
-    (side === "left" ? leftDiffs : rightDiffs).push({
-      path: diffPath,
-      line,
-      isParent,
-      isArrayIndex
+  }
+
+  // Then scroll to exact element
+  let element =
+    container.querySelector(`#key-${side}-${CSS.escape(path)}`);
+
+  if (!element)
+    element =
+      container.querySelector(`#node-${side}-${CSS.escape(path)}`);
+
+  if (!element)
+    element =
+      container.querySelector(`#value-${side}-${CSS.escape(path)}`);
+
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
     });
   }
-
-  function compare(obj1, obj2, currentPath) {
-    if (obj1 === obj2)
-      return;
+}
 
 
 
-    if (typeof obj1 !== typeof obj2 || obj1 === null || obj2 === null) {
-      addDiff("left", currentPath);
-      addDiff("right", currentPath);
-      const parentPath = currentPath.split(".").slice(0, -1).join(".");
-      if (parentPath) {
-        const isArrayIndex = /^\d+$/.test(currentPath.split(".").pop());
-        addDiff("left", parentPath, true, isArrayIndex);
-        addDiff("right", parentPath, true, isArrayIndex);
-      }
+
+document.getElementById("diff-next").addEventListener("click", () => {
+
+  if (!allDiffPaths.length) return;
+
+  currentDiffIndex++;
+
+  if (currentDiffIndex >= allDiffPaths.length)
+    currentDiffIndex = 0;
+
+  scrollToDiff(currentDiffIndex);
+});
+
+
+document.getElementById("diff-prev").addEventListener("click", () => {
+
+  if (!allDiffPaths.length) return;
+
+  currentDiffIndex--;
+
+  if (currentDiffIndex < 0)
+    currentDiffIndex = allDiffPaths.length - 1;
+
+  scrollToDiff(currentDiffIndex);
+});
+
+
+
+// JSON comparison function
+function compareJSON(obj1, obj2) {
+
+  const leftDiffs = [];
+  const rightDiffs = [];
+
+  function walk(o1, o2, path = "") {
+
+    // 🔥 Use lodash isEqual
+    if (_.isEqual(o1, o2)) return;
+
+    // Primitive difference
+    if (typeof o1 !== "object" || o1 === null ||
+        typeof o2 !== "object" || o2 === null) {
+
+      leftDiffs.push({ path });
+      rightDiffs.push({ path });
       return;
     }
 
-    if (typeof obj1 === "object" && obj1 !== null) {
-      const isArray = Array.isArray(obj1);
-      const keys = new Set([
-        ...Object.keys(obj1 || {}),
-        ...Object.keys(obj2 || {}),
-      ]);
-      let hasDiffs = false;
+    // Array handling
+    if (Array.isArray(o1) && Array.isArray(o2)) {
 
-      for (const key of keys) {
-        const newPath = currentPath ? `${currentPath}.${key}` : key;
-        const isArrayIndex = isArray && /^\d+$/.test(key);
+      const max = Math.max(o1.length, o2.length);
 
-        if (!obj2.hasOwnProperty(key)) {
-          addDiff("left", newPath, false, isArrayIndex);
-          hasDiffs = true;
-        } else if (!obj1.hasOwnProperty(key)) {
-          addDiff("right", newPath, false, isArrayIndex);
-          hasDiffs = true;
-        } else if (JSON.stringify(obj1[key]) !== JSON.stringify(obj2[key])) {
-          addDiff("left", newPath, false, isArrayIndex);
-          addDiff("right", newPath, false, isArrayIndex);
-          hasDiffs = true;
-          compare(obj1[key], obj2[key], newPath);
-        } else {
-          compare(obj1[key], obj2[key], newPath);
+      for (let i = 0; i < max; i++) {
+
+        const newPath = path ? `${path}.${i}` : `${i}`;
+
+        if (!_.isEqual(o1[i], o2[i])) {
+          leftDiffs.push({ path: newPath });
+          rightDiffs.push({ path: newPath });
+          walk(o1[i], o2[i], newPath);
         }
       }
 
-      if (hasDiffs && currentPath) {
-        const isArrayIndex = /^\d+$/.test(currentPath.split(".").pop());
-        addDiff("left", currentPath, true, isArrayIndex);
-        addDiff("right", currentPath, true, isArrayIndex);
-      }
-    } else if (obj1 !== obj2) {
-      addDiff("left", currentPath);
-      addDiff("right", currentPath);
-      const parentPath = currentPath.split(".").slice(0, -1).join(".");
-      if (parentPath) {
-        const isArrayIndex = /^\d+$/.test(currentPath.split(".").pop());
-        addDiff("left", parentPath, true, isArrayIndex);
-        addDiff("right", parentPath, true, isArrayIndex);
+      return;
+    }
+
+    // Object handling
+    const keys = new Set([
+      ...Object.keys(o1 || {}),
+      ...Object.keys(o2 || {})
+    ]);
+
+    for (let key of keys) {
+
+      const newPath = path ? `${path}.${key}` : key;
+
+      if (!_.isEqual(o1?.[key], o2?.[key])) {
+        leftDiffs.push({ path: newPath });
+        rightDiffs.push({ path: newPath });
+        walk(o1?.[key], o2?.[key], newPath);
       }
     }
   }
 
-  compare(obj1, obj2, "");
+  walk(obj1, obj2);
+
+  // Remove duplicate paths
+  const uniqueLeft = [...new Map(leftDiffs.map(d => [d.path, d])).values()];
+  const uniqueRight = [...new Map(rightDiffs.map(d => [d.path, d])).values()];
+
   return {
-    leftDiffs,
-    rightDiffs
+    leftDiffs: uniqueLeft,
+    rightDiffs: uniqueRight
   };
 }
 
